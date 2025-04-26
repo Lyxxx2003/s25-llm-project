@@ -1,7 +1,12 @@
+"""
+Not important
+"""
+
 import os
 import re
 import json
 import pandas as pd
+import matplotlib.pyplot as plt
 from tqdm import tqdm  # Importing tqdm for the progress bar
 
 # Function to process each file and return the processed lyrics
@@ -46,13 +51,16 @@ def calculate_median_length(sheet_data, directory_path):
     mean_length = pd.Series(lengths).mean()
     return median_length, mean_length
 
-# Function to combine data and create JSON without genre
-def combine_data_and_create_json(directory_path, sheet_data):
+# Function to combine data and create JSON without genre, excluding outliers
+def combine_data_and_create_json(directory_path, sheet_data, outlier_song_ids):
     combined_data = {}
 
     # Use tqdm to show progress while iterating over the rows
     for index, row in tqdm(sheet_data.iterrows(), total=sheet_data.shape[0], desc="Processing songs"):
         song_id = row['song_id']
+        if song_id in outlier_song_ids:
+            continue  # Skip outlier songs
+        
         title = row['title']
         lyricist = row['lyricist(s)']
         genre = row['genre']  # Retaining genre from the CSV
@@ -77,22 +85,77 @@ def combine_data_and_create_json(directory_path, sheet_data):
         }
 
     # Save to JSON
-    with open('songs_data_no_genre.json', 'w', encoding='utf-8') as json_file:
+    with open('songs_data_no_genre_filtered.json', 'w', encoding='utf-8') as json_file:
         json.dump(combined_data, json_file, ensure_ascii=False, indent=4)
 
-    print("JSON file created successfully with song data (without genre).")
+    print("JSON file created successfully without outliers.")
 
 # Provide the directory path where the text files are stored
-directory_path = '/Users/apple/Desktop/LLM Foundations & Ethics/Dataset/lyrics'  # Change this to the path of your folder
-data_file_path = '/Users/apple/Desktop/LLM Foundations & Ethics/Dataset/data.csv'  # Path to your data CSV file
+directory_path = './lyrics'  # Change this to the path of your folder
+data_file_path = './data.csv'  # Path to your data CSV file
 
 # Fetch the data from CSV file
 sheet_data = get_data_from_csv(data_file_path)
 
-# Combine sheet data with processed file lengths, lyrics, and genre, then create JSON without genre generation
-combine_data_and_create_json(directory_path, sheet_data)
+# Calculate the song lengths
+song_lengths = []
+for index, row in sheet_data.iterrows():
+    song_id = row['song_id']
+    file_name = f"{song_id}.txt"
+    file_path = os.path.join(directory_path, file_name)
+    
+    if os.path.exists(file_path):
+        _, length = process_file(file_path)  # Get the processed length of the lyrics
+        song_lengths.append(length)
 
 # Calculate and print the median length of all songs
 median_length, mean_length = calculate_median_length(sheet_data, directory_path)
 print(f"The median song length is: {median_length}")
 print(f"The mean song length is: {mean_length}")
+
+# Calculate max, min
+max_length = max(song_lengths)
+min_length = min(song_lengths)
+
+# Print the max and min song lengths
+print(f"The maximum song length is: {max_length}")
+print(f"The minimum song length is: {min_length}")
+
+# Calculate the quartiles and IQR
+Q1 = pd.Series(song_lengths).quantile(0.25)
+Q3 = pd.Series(song_lengths).quantile(0.75)
+IQR = Q3 - Q1
+
+# Define outlier bounds
+lower_bound = Q1 - 1.5 * IQR
+upper_bound = Q3 + 1.5 * IQR
+print(f"Lower Bound: {lower_bound}")
+print(f"Upper Bound: {upper_bound}")
+
+# Identify the song IDs of outliers
+outlier_song_ids = [sheet_data.iloc[index]['song_id'] for index, length in enumerate(song_lengths) 
+                    if length < lower_bound or length > upper_bound]
+outlier_song_ids = [int(song_id) for song_id in outlier_song_ids]
+
+# Print the song IDs of outliers
+print(f"Song IDs of outliers: {outlier_song_ids}")
+
+# Print the number of outliers
+print(f"Number of outliers: {len(outlier_song_ids)}")
+
+# Combine sheet data with processed file lengths, lyrics, and genre, then create JSON without outliers
+combine_data_and_create_json(directory_path, sheet_data, outlier_song_ids)
+
+# Find song IDs with length less than 33
+short_songs_ids = [sheet_data.iloc[index]['song_id'] for index, length in enumerate(song_lengths) if length < 33]
+short_songs_ids = [int(song_id) for song_id in short_songs_ids]
+
+# Print the song IDs
+print(f"Song IDs with length less than 33: {short_songs_ids}")
+
+# Create a box plot
+plt.figure(figsize=(8, 6))
+plt.boxplot(song_lengths, vert=False)
+plt.title('Song Length Distribution')
+plt.xlabel('Song Length (in number of lines)')
+plt.show()
