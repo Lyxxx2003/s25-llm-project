@@ -57,10 +57,13 @@ for item in tqdm(test_data, desc="Processing data"):
     # Extract the integer value that follows the </think> token
     if think_end_pos != -1:
         prediction_str = response_content[think_end_pos + len('</think>'):].strip()
-        prediction = int(prediction_str)
+        try:
+            prediction = int(prediction_str)
+        except ValueError:
+            prediction = 0  # Assign a default value if conversion fails
     else:
         # Handle the case where </think> is not found
-        prediction = None  # or some default value or error handling
+        prediction = 0  # Assign a default value or log an error
 
     # Append the results
     results.append({'Text1': text1, 'Text2': text2, 'Genre1': genres_1, 'Genre2': genres_2, 'TrueLabel': true_label, 'Prediction': prediction, 'Mode': mode})
