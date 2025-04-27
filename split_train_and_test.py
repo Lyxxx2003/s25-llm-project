@@ -18,13 +18,13 @@ for song_id, song_info in songs_data.items():
 def create_hard_positives():
     hard_positives = []
     for lyricist, genres in lyricist_songs.items():
-        if len(genres) > 1:  # Cross-genre author
+        if len(genres) > 1:
             genre_pairs = [(g1, g2) for g1 in genres for g2 in genres if g1 != g2]
             for g1, g2 in genre_pairs:
                 if genres[g1] and genres[g2]:
                     song1 = random.choice(genres[g1])
                     song2 = random.choice(genres[g2])
-                    hard_positives.append((song1, song2, 1))  # 1 indicates same author
+                    hard_positives.append((song1, song2, 1))
     return hard_positives
 
 # Helper function to create hard negatives
@@ -33,60 +33,95 @@ def create_hard_negatives():
     for genre in set(g for genres in lyricist_songs.values() for g in genres):
         lyricists_in_genre = [lyricist for lyricist, genres in lyricist_songs.items() if genre in genres]
         if len(lyricists_in_genre) > 1:
-            lyricist_pairs = [(l1, l2) for l1 in lyricists_in_genre for l2 in lyricists_in_genre if l1 != l2]
+            lyricist_pairs = [(l1, l2) for i, l1 in enumerate(lyricists_in_genre) for l2 in lyricists_in_genre[i+1:]]
             for l1, l2 in lyricist_pairs:
                 song1 = random.choice(lyricist_songs[l1][genre])
                 song2 = random.choice(lyricist_songs[l2][genre])
-                hard_negatives.append((song1, song2, 0))  # 0 indicates different authors
+                hard_negatives.append((song1, song2, 0))
     return hard_negatives
 
-# Create training and testing datasets
+# Create pairs
 hard_positives = create_hard_positives()
 hard_negatives = create_hard_negatives()
-
-# Combine and shuffle
 all_data = hard_positives + hard_negatives
 random.shuffle(all_data)
 
-# Select lyricists for test_2
+# Identify all unique lyricists
 all_lyricists = list(lyricist_songs.keys())
 random.shuffle(all_lyricists)
-test_2_lyricists = set(all_lyricists[:len(all_lyricists) // 5])  # Reserve 20% of lyricists for test_2
 
-# Create training data excluding test_2 lyricists
-training_data = []
-for pair in all_data:
-    if pair[0]['lyricist(s)'] not in test_2_lyricists:
-        training_data.append(pair)
+# Reserve some lyricists completely for test_2
+num_test_2_lyricists = max(1, int(0.1 * len(all_lyricists)))
+reserved_lyricists = set(all_lyricists[:num_test_2_lyricists])
 
-# Create test_1 and test_2 datasets
-per_genre_test_1 = []
-cross_genre_test_1 = []
-per_genre_test_2 = []
-cross_genre_test_2 = []
-
+# Split data into test_2, test_1 candidates, and training candidates
+test_2_data = []
+test_1_candidates = []
+train_candidates = []
 for pair in all_data:
     lyricist_1 = pair[0]['lyricist(s)']
     lyricist_2 = pair[1]['lyricist(s)']
-    genres_1 = set(pair[0]['genre'])
-    genres_2 = set(pair[1]['genre'])
-    if lyricist_1 in test_2_lyricists or lyricist_2 in test_2_lyricists:
-        if genres_1 & genres_2:  # Per-genre
-            per_genre_test_2.append(pair)
-        else:  # Cross-genre
-            cross_genre_test_2.append(pair)
+    if lyricist_1 in reserved_lyricists or lyricist_2 in reserved_lyricists:
+        if lyricist_1 in reserved_lyricists and lyricist_2 in reserved_lyricists:
+            test_2_data.append(pair)
     else:
-        if genres_1 & genres_2:  # Per-genre
-            per_genre_test_1.append(pair)
-        else:  # Cross-genre
-            cross_genre_test_1.append(pair)
+        test_1_candidates.append(pair)
 
-# Save the datasets
-with open('training_data.json', 'w') as file:
-    json.dump(training_data, file, ensure_ascii=False, indent=4)
+random.shuffle(test_1_candidates)
 
-with open('testing_data_1.json', 'w') as file:
-    json.dump(per_genre_test_1 + cross_genre_test_1, file, ensure_ascii=False, indent=4)
+# Calculate target sizes
+total_samples = len(all_data)
+train_size = int(0.8 * total_samples)
+test_total_size = total_samples - train_size
+test_1_size = test_total_size - len(test_2_data)
 
-with open('testing_data_2.json', 'w') as file:
-    json.dump(per_genre_test_2 + cross_genre_test_2, file, ensure_ascii=False, indent=4) 
+if test_1_size < 0:
+    raise ValueError("Test_2 is too large, cannot satisfy 80/20 split!")
+
+# Split test_1 and training data
+test_1_data = test_1_candidates[:test_1_size]
+training_data = test_1_candidates[test_1_size:]
+
+# Save datasets
+with open('training_data.json', 'w') as f:
+    json.dump(training_data, f, ensure_ascii=False, indent=4)
+
+with open('testing_data_1.json', 'w') as f:
+    json.dump(test_1_data, f, ensure_ascii=False, indent=4)
+
+with open('testing_data_2.json', 'w') as f:
+    json.dump(test_2_data, f, ensure_ascii=False, indent=4)
+
+# Print stats
+print(f"Total samples: {len(all_data)}")
+print(f"Training samples: {len(training_data)}")
+print(f"Test_1 samples: {len(test_1_data)}")
+print(f"Test_2 samples: {len(test_2_data)}")
+
+# Check for overlaps
+def check_song_overlap(train, test):
+    train_titles = set()
+    for pair in train:
+        train_titles.add(pair[0]['title'])
+        train_titles.add(pair[1]['title'])
+
+    for pair in test:
+        if pair[0]['title'] in train_titles or pair[1]['title'] in train_titles:
+            return False
+    return True
+
+print("Train/Test_1 song overlap:", not check_song_overlap(training_data, test_1_data))
+print("Train/Test_2 song overlap:", not check_song_overlap(training_data, test_2_data))
+
+def check_author_overlap(train, test):
+    train_authors = set()
+    for pair in train:
+        train_authors.add(pair[0]['lyricist(s)'])
+        train_authors.add(pair[1]['lyricist(s)'])
+
+    for pair in test:
+        if pair[0]['lyricist(s)'] in train_authors or pair[1]['lyricist(s)'] in train_authors:
+            return False
+    return True
+
+print("Train/Test_2 author overlap:", not check_author_overlap(training_data, test_2_data))
