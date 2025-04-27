@@ -1,0 +1,5 @@
+together
+scikit-learn
+pandas
+matplotlib
+tqdm 
