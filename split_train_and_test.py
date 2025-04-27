@@ -46,41 +46,69 @@ hard_negatives = create_hard_negatives()
 all_data = hard_positives + hard_negatives
 random.shuffle(all_data)
 
+# Identify valid genres with both 0 and 1 labels
+def find_valid_genres(pairs):
+    genre_labels = defaultdict(set)
+    for song1, song2, label in pairs:
+        for genre in song1['genre'] + song2['genre']:
+            genre_labels[genre].add(label)
+    return {genre for genre, labels in genre_labels.items() if labels == {0, 1}}
+
+valid_genres = find_valid_genres(all_data)
+
+# Filter pairs to only valid genres
+filtered_data = []
+for pair in all_data:
+    song1, song2, label = pair
+    if any(genre in valid_genres for genre in song1['genre'] + song2['genre']):
+        filtered_data.append(pair)
+
+all_data = filtered_data
+
 # Identify all unique lyricists
-all_lyricists = list(lyricist_songs.keys())
+all_lyricists = list(set(song['lyricist(s)'] for pair in all_data for song in pair[:2]))
 random.shuffle(all_lyricists)
 
 # Reserve some lyricists completely for test_2
 num_test_2_lyricists = max(1, int(0.1 * len(all_lyricists)))
 reserved_lyricists = set(all_lyricists[:num_test_2_lyricists])
 
-# Split data into test_2, test_1 candidates, and training candidates
+# Prepare allocation sets
+used_pairs = set()
 test_2_data = []
-test_1_candidates = []
-train_candidates = []
+test_1_data = []
+training_data = []
+
+# Helper to create unique pair key
+def pair_key(song1, song2):
+    return tuple(sorted([song1['title'], song2['title']]))
+
+# First assign test_2 strictly
 for pair in all_data:
-    lyricist_1 = pair[0]['lyricist(s)']
-    lyricist_2 = pair[1]['lyricist(s)']
-    if lyricist_1 in reserved_lyricists or lyricist_2 in reserved_lyricists:
-        if lyricist_1 in reserved_lyricists and lyricist_2 in reserved_lyricists:
+    song1, song2, label = pair
+    lyricist1 = song1['lyricist(s)']
+    lyricist2 = song2['lyricist(s)']
+    pk = pair_key(song1, song2)
+    if lyricist1 in reserved_lyricists and lyricist2 in reserved_lyricists:
+        if pk not in used_pairs:
             test_2_data.append(pair)
+            used_pairs.add(pk)
+
+# Then assign test_1 and train
+for pair in all_data:
+    song1, song2, label = pair
+    lyricist1 = song1['lyricist(s)']
+    lyricist2 = song2['lyricist(s)']
+    pk = pair_key(song1, song2)
+    if pk in used_pairs:
+        continue
+    if lyricist1 in reserved_lyricists or lyricist2 in reserved_lyricists:
+        continue
+    if len(test_1_data) < int(0.1 * len(all_data)):
+        test_1_data.append(pair)
     else:
-        test_1_candidates.append(pair)
-
-random.shuffle(test_1_candidates)
-
-# Calculate target sizes
-total_samples = len(all_data)
-train_size = int(0.8 * total_samples)
-test_total_size = total_samples - train_size
-test_1_size = test_total_size - len(test_2_data)
-
-if test_1_size < 0:
-    raise ValueError("Test_2 is too large, cannot satisfy 80/20 split!")
-
-# Split test_1 and training data
-test_1_data = test_1_candidates[:test_1_size]
-training_data = test_1_candidates[test_1_size:]
+        training_data.append(pair)
+    used_pairs.add(pk)
 
 # Save datasets
 with open('training_data.json', 'w') as f:
@@ -93,25 +121,21 @@ with open('testing_data_2.json', 'w') as f:
     json.dump(test_2_data, f, ensure_ascii=False, indent=4)
 
 # Print stats
-print(f"Total samples: {len(all_data)}")
+print(f"Total pairs after filtering: {len(all_data)}")
 print(f"Training samples: {len(training_data)}")
 print(f"Test_1 samples: {len(test_1_data)}")
 print(f"Test_2 samples: {len(test_2_data)}")
 
 # Check for overlaps
-def check_song_overlap(train, test):
-    train_titles = set()
+def check_pair_overlap(train, test):
+    train_pairs = set()
     for pair in train:
-        train_titles.add(pair[0]['title'])
-        train_titles.add(pair[1]['title'])
+        train_pairs.add(pair_key(pair[0], pair[1]))
 
     for pair in test:
-        if pair[0]['title'] in train_titles or pair[1]['title'] in train_titles:
+        if pair_key(pair[0], pair[1]) in train_pairs:
             return False
     return True
-
-print("Train/Test_1 song overlap:", not check_song_overlap(training_data, test_1_data))
-print("Train/Test_2 song overlap:", not check_song_overlap(training_data, test_2_data))
 
 def check_author_overlap(train, test):
     train_authors = set()
@@ -124,4 +148,6 @@ def check_author_overlap(train, test):
             return False
     return True
 
+print("Train/Test_1 pair overlap:", not check_pair_overlap(training_data, test_1_data))
+print("Train/Test_2 pair overlap:", not check_pair_overlap(training_data, test_2_data))
 print("Train/Test_2 author overlap:", not check_author_overlap(training_data, test_2_data))
