@@ -30,7 +30,7 @@ def process_file(file_path):
         # Process lyrics to remove unwanted parts
         line = re.sub(r'\[.*?\]', '', line)  # Remove content in square brackets
         line = re.sub(r'^.*?：', '', line)  # Remove text before the colon
-        line = re.sub(r'[\"（）～【】“”()~[]"]', ' ', line)  # Replace unwanted characters with space
+        line = re.sub(r'[\"（）～【】“”]', ' ', line)  # Replace unwanted characters with space
         line = line.strip()  # Strip any leading or trailing spaces
         
         if line:
@@ -170,13 +170,16 @@ def remove_outliers(sheet_data, song_lengths):
     # Return the list of outlier song IDs
     return outlier_song_ids
 
-# Function to combine data and create JSON for the first 10 songs, excluding outliers
-def combine_data_and_create_json(directory_path, sheet_data, outlier_song_ids):
+# Function to combine data and create JSON, excluding outliers
+def combine_data_and_create_json(directory_path, sheet_data, outlier_song_ids, song_ids_to_process):
     combined_data = {}
 
-    # Use tqdm to show progress while iterating over the rows
-    for index, row in tqdm(sheet_data.head(10).iterrows(), total=10, desc="Processing first 10 songs"):
+    # Use tqdm to show progress while iterating over the rows, considering only song_ids_to_process
+    for index, row in tqdm(sheet_data.iterrows(), total=len(song_ids_to_process), desc="Processing selected songs"):
         song_id = row['song_id']
+        if song_id not in song_ids_to_process:
+            continue  # Skip songs not in the list of song_ids_to_process
+        
         if song_id in outlier_song_ids:
             continue  # Skip outlier songs
         
@@ -188,7 +191,7 @@ def combine_data_and_create_json(directory_path, sheet_data, outlier_song_ids):
         file_path = os.path.join(directory_path, file_name)
         
         if os.path.exists(file_path):
-            lyrics, length = process_file(file_path)  # Get the processed lyrics and length
+            lyrics, length = process_file(file_path)  # Get the processed length of the lyrics
             generated_genre = generate_genre(lyrics, genre_concepts)  # Get the genre from DeepSeek
         else:
             lyrics, length, generated_genre = None, None, None
@@ -198,49 +201,19 @@ def combine_data_and_create_json(directory_path, sheet_data, outlier_song_ids):
             "title": title,
             "lyricist(s)": lyricists,
             "genre": generated_genre if generated_genre else genre,  # Use generated genre if available
-            # "cross-genre_author": False,  # Set cross-genre_author to False initially
+            "cross-genre_author": False,  # Set cross-genre_author to False initially
             "length": length,
             "lyrics": lyrics  # Store the processed lyrics
         }
 
     # Save to JSON
-    with open('songs_data_first_10_filtered_Chinese.json', 'w', encoding='utf-8') as json_file:
+    with open('songs_data_filtered_Chinese_selected.json', 'w', encoding='utf-8') as json_file:
         json.dump(combined_data, json_file, ensure_ascii=False, indent=4)
 
-    print("JSON file created successfully with first 10 songs.")
+    print("JSON file created successfully with selected songs.")
 
-# # Function to split the data into training (80%) and testing (20%)
-# def split_data(input_json_path):
-#     # Read the input JSON file
-#     with open(input_json_path, 'r', encoding='utf-8') as json_file:
-#         combined_data = json.load(json_file)
-
-#     # Get the list of song IDs (keys of the dictionary)
-#     song_ids = list(combined_data.keys())
-    
-#     # Randomly shuffle the song IDs
-#     random.shuffle(song_ids)
-    
-#     # Calculate the index for the 80% training data
-#     train_size = int(0.8 * len(song_ids))
-    
-#     # Split the data
-#     train_song_ids = song_ids[:train_size]
-#     test_song_ids = song_ids[train_size:]
-    
-#     # Prepare the training and testing data
-#     training_data = {song_id: combined_data[song_id] for song_id in train_song_ids}
-#     testing_data = {song_id: combined_data[song_id] for song_id in test_song_ids}
-
-#     # Save the training data to a JSON file
-#     with open('training_data.json', 'w', encoding='utf-8') as json_file:
-#         json.dump(training_data, json_file, ensure_ascii=False, indent=4)
-    
-#     # Save the testing data to a JSON file
-#     with open('testing_data.json', 'w', encoding='utf-8') as json_file:
-#         json.dump(testing_data, json_file, ensure_ascii=False, indent=4)
-
-#     print("Data split completed: 'training_data.json' and 'testing_data.json' created.")
+# List of song IDs you want to process
+song_ids_to_process = [118, 194, 463, 470, 519, 728, 857, 885, 903, 926, 965, 985]  # Replace this with your specific song IDs
 
 # Provide the directory path where the text files are stored
 directory_path = './lyrics'  # Change this to the path of your folder
@@ -251,7 +224,7 @@ sheet_data = get_data_from_csv(data_file_path)
 
 # Calculate the song lengths
 song_lengths = []
-for index, row in sheet_data.head(10).iterrows():  # Only consider first 10 songs
+for index, row in sheet_data.iterrows():
     song_id = row['song_id']
     file_name = f"{song_id}.txt"
     file_path = os.path.join(directory_path, file_name)
@@ -276,15 +249,12 @@ min_length = min(song_lengths)
 print(f"The maximum song length is: {max_length}")
 print(f"The minimum song length is: {min_length}")
 
-# First pass: Create the JSON file without cross-genre_author field
-combine_data_and_create_json(directory_path, sheet_data, outlier_song_ids)
+# First pass: Create the JSON file without cross-genre_author field for selected songs
+combine_data_and_create_json(directory_path, sheet_data, outlier_song_ids, song_ids_to_process)
 
 # # Second pass: Track cross-genre lyricists and update the cross-genre_author field
 # cross_genre_lyricists = track_cross_genre(sheet_data)
 # update_cross_genre_status(sheet_data, cross_genre_lyricists)
-
-# # Split the combined data into training and testing sets
-# split_data('songs_data_first_10_filtered_Chinese.json')
 
 # Create a box plot
 plt.figure(figsize=(8, 6))

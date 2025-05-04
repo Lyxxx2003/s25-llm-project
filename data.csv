@@ -54,7 +54,7 @@ song_id,title,lyricist(s),genre,raw_lyrics (raw_lyrics/song_id.txt),cross-genre_
 53,青花瓷,方文山,,53.txt,,,FALSE,Meng
 54,菊花台,方文山,,54.txt,,,FALSE,Meng
 55,红尘客栈,方文山,,55.txt,,,FALSE,Meng
-56,皮影戏,唐从圣,,56.txt,,,TRUE,Meng
+56,花火,岳琬清,,56.txt,,,FALSE,Meng
 57,南山南,马頔,,57.txt,,,FALSE,Meng
 58,皆非,马頔,,58.txt,,,FALSE,Meng
 59,霍元甲,方文山,,59.txt,,,FALSE,Meng
@@ -62,7 +62,7 @@ song_id,title,lyricist(s),genre,raw_lyrics (raw_lyrics/song_id.txt),cross-genre_
 61,不能说的秘密,方文山,,61.txt,,,FALSE,Meng
 62,稻香,周杰伦,,62.txt,,,FALSE,Meng
 63,告白气球,方文山,,63.txt,,,FALSE,Meng
-64,龙卷风,徐若瑄,,64.txt,,,TRUE,Meng
+64,直来直往,方文山,,64.txt,,,FALSE,Meng
 65,老友记,李荣浩,,65.txt,,,FALSE,Yuxin
 66,麻雀,李荣浩,,66.txt,,,FALSE,Yuxin
 67,失控,李棒棒Muti,,67.txt,,,FALSE,Yuxin
@@ -101,13 +101,13 @@ song_id,title,lyricist(s),genre,raw_lyrics (raw_lyrics/song_id.txt),cross-genre_
 100,阳光宅男,方文山,,100.txt,,,FALSE,Meng
 101,Mojito,黄俊郎,,101.txt,,,FALSE,Meng
 102,躺着真舒服,刘思鉴,,102.txt,,,FALSE,Meng
-103,醉,假寐,,103.txt,,,TRUE,Meng
+103,一眨眼长大,岳琬清,,103.txt,,,FALSE,Meng
 104,爱到1440,Lil Ghost小鬼,,104.txt,,,FALSE,Meng
 105,别叫我达芬奇,Lil Ghost小鬼,,105.txt,,,FALSE,Meng
-106,无尽的冒险,夏鸢,,106.txt,,,TRUE,Meng
-107,背对地球奔跑,岳琬清,,107.txt,,,TRUE,Meng
+106,与世界温柔相处,岳琬清,,106.txt,,,FALSE,Meng
+107,背对地球奔跑,岳琬清,,107.txt,,,FALSE,Meng
 108,万有引力,汪苏泷,,108.txt,,,FALSE,Meng
-109,一笑倾城,Finale,,109.txt,,,TRUE,Meng
+109,飞鸟来过,岳琬清,,109.txt,,,FALSE,Meng
 110,有点甜,汪苏泷,,110.txt,,,FALSE,Meng
 111,像晴天像雨天,汪苏泷,,111.txt,,,FALSE,Meng
 112,就让这大雨全都落下,汪苏泷,,112.txt,,,FALSE,Meng
