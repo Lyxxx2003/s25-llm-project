@@ -26,4 +26,4 @@ coverage/
 *.tmp
 *.swp 
 
- .venv/
+ .venv/finetuned_chinese_roberta_model/
