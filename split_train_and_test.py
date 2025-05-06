@@ -9,7 +9,7 @@ chinese_font = fm.FontProperties(fname="SimHei.ttf")
 
 # -------------------- Load and Preprocess --------------------
 
-with open("songs_data_filtered_Chinese.json", "r") as file:
+with open("./json/songs_data_filtered_Chinese.json", "r") as file:
     songs_data = json.load(file)
 
 # Group songs by lyricist and genre
@@ -84,10 +84,10 @@ for s1, s2, label in filtered_data:
 
 # -------------------- Save JSON --------------------
 
-with open("training_data.json", "w") as f:
+with open("./json/training_data.json", "w") as f:
     json.dump(train_data, f, ensure_ascii=False, indent=2)
 
-with open("testing_data_1.json", "w") as f:
+with open("./json/testing_data_1.json", "w") as f:
     json.dump(test_data, f, ensure_ascii=False, indent=2)
 
 # -------------------- Overlap Checks --------------------
@@ -144,7 +144,7 @@ def plot_hist(data, title, filename):
     plt.savefig(filename)
     plt.close()
 
-plot_hist(all_authors_dist, "所有数据中的每个流派的独立作词人数量", "all_data_hist.png")
-plot_hist(train_authors_dist, "训练集中的每个流派的独立作词人数量", "train_data_hist.png")
-plot_hist(test_authors_dist, "测试集中的每个流派的独立作词人数量", "test_data_hist.png")
+plot_hist(all_authors_dist, "所有数据中的每个流派的独立作词人数量", "./images/all_data_hist.png")
+plot_hist(train_authors_dist, "训练集中的每个流派的独立作词人数量", "./images/train_data_hist.png")
+plot_hist(test_authors_dist, "测试集中的每个流派的独立作词人数量", "./images/test_data_hist.png")
 
