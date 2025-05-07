@@ -5,7 +5,7 @@ import pandas as pd
 from tqdm import tqdm
 
 # Load the testing data
-with open('./json/testing_data_2.json', 'r') as file:
+with open('../json/testing_data_2.json', 'r') as file:
     test_data_2 = json.load(file)
 
 # Combine test data
@@ -51,4 +51,4 @@ for item in tqdm(test_data, desc="Processing data"):
 # Convert results to DataFrame
 results_df = pd.DataFrame(results)
 
-results_df.to_csv('./csv/zero_shot_results_df_2.csv', index=False)
+results_df.to_csv('../csv/zero_shot_results_df_2.csv', index=False)
