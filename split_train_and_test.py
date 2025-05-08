@@ -127,7 +127,7 @@ for genre in all_authors_dist:
     a = all_authors_dist.get(genre, 0)
     t = train_authors_dist.get(genre, 0)
     s = test_authors_dist.get(genre, 0)
-    print(f"{genre:<20} {a:>5} {t:>7} {s:>6} {a == (t + s)}")
+    print(f"{genre:<20} {a:>5} {t:>7} {s:>6} {a != (t + s)}")
 
 # -------------------- Plotting --------------------
 

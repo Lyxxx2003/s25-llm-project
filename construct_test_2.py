@@ -15,7 +15,7 @@ with open("./json/test2_data.json", "r") as file:
 # Group songs by lyricist and genre
 lyricist_songs = defaultdict(lambda: defaultdict(list))
 for _, song_info in songs_data.items():
-    lyricist = song_info["lyricist"]
+    lyricist = song_info["lyricist(s)"]
     for genre in song_info["genre"]:
         lyricist_songs[lyricist][genre].append(song_info)
 
@@ -91,16 +91,7 @@ print("Train/Test_2 pair overlap:", not check_pair_overlap(train_data, all_data)
 
 # -------------------- Author Distribution by Genre --------------------
 
-def compute_unique_authors_per_genre_test(pairs):
-    genre_to_authors = defaultdict(set)
-    for s1, s2, _ in pairs:
-        for g in s1["genre"]:
-            genre_to_authors[g].add(s1["lyricist"])
-        for g in s2["genre"]:
-            genre_to_authors[g].add(s2["lyricist"])
-    return dict(sorted({g: len(a) for g, a in genre_to_authors.items()}.items(), key=lambda x: x[0]))
-
-def compute_unique_authors_per_genre_train(pairs):
+def compute_unique_authors_per_genre(pairs):
     genre_to_authors = defaultdict(set)
     for s1, s2, _ in pairs:
         for g in s1["genre"]:
@@ -109,8 +100,8 @@ def compute_unique_authors_per_genre_train(pairs):
             genre_to_authors[g].add(s2["lyricist(s)"])
     return dict(sorted({g: len(a) for g, a in genre_to_authors.items()}.items(), key=lambda x: x[0]))
 
-train_authors_dist = compute_unique_authors_per_genre_train(train_data)
-test_authors_dist = compute_unique_authors_per_genre_test(all_data)
+train_authors_dist = compute_unique_authors_per_genre(train_data)
+test_authors_dist = compute_unique_authors_per_genre(all_data)
 
 # Print detailed breakdown and consistency check
 print("\nGenre-wise lyricist counts (Train == Test):")
