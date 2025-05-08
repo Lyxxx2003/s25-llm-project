@@ -1,7 +1,3 @@
-"""
-Not important
-"""
-
 import os
 import re
 import json
@@ -20,7 +16,8 @@ def process_file(file_path):
         # Process lyrics to remove unwanted parts
         line = re.sub(r'\[.*?\]', '', line)  # Remove content in square brackets
         line = re.sub(r'^.*?：', '', line)  # Remove text before the colon
-        line = re.sub(r'[\"（）～【】“”()~[]"]', ' ', line)  # Replace unwanted characters with space
+        # Replace unwanted characters with space
+        line = re.sub(r'[\"（）～【】“”()~[\]]', ' ', line)  # Add more unwanted characters here
         line = line.strip()  # Strip any leading or trailing spaces
         
         if line:
@@ -58,13 +55,12 @@ def combine_data_and_create_json(directory_path, sheet_data, outlier_song_ids):
     # Use tqdm to show progress while iterating over the rows
     for index, row in tqdm(sheet_data.iterrows(), total=sheet_data.shape[0], desc="Processing songs"):
         song_id = row['song_id']
-        if song_id in outlier_song_ids:
-            continue  # Skip outlier songs
+        # if song_id in outlier_song_ids:
+        #     continue  # Skip outlier songs
         
         title = row['title']
         lyricist = row['lyricist(s)']
         genre = row['genre']  # Retaining genre from the CSV
-        cross_genre_author = row['cross-genre_author']
         file_name = f"{song_id}.txt"  # Assuming file name matches song_id
         
         file_path = os.path.join(directory_path, file_name)
@@ -78,21 +74,20 @@ def combine_data_and_create_json(directory_path, sheet_data, outlier_song_ids):
         combined_data[song_id] = {
             "title": title,
             "lyricist": lyricist,
-            "genre": genre,  # Use genre from the CSV
-            "cross-genre_author": cross_genre_author,
+            "genre": [genre],  # Use genre from the CSV
             "length": length,
             "lyrics": lyrics  # Store the processed lyrics
         }
 
     # Save to JSON
-    with open('songs_data_no_genre_filtered.json', 'w', encoding='utf-8') as json_file:
+    with open('test2_data.json', 'w', encoding='utf-8') as json_file:
         json.dump(combined_data, json_file, ensure_ascii=False, indent=4)
 
     print("JSON file created successfully without outliers.")
 
 # Provide the directory path where the text files are stored
-directory_path = './lyrics'  # Change this to the path of your folder
-data_file_path = './data.csv'  # Path to your data CSV file
+directory_path = './test2_lyrics'  # Change this to the path of your folder
+data_file_path = './test2_data.csv'  # Path to your data CSV file
 
 # Fetch the data from CSV file
 sheet_data = get_data_from_csv(data_file_path)
@@ -145,13 +140,6 @@ print(f"Number of outliers: {len(outlier_song_ids)}")
 
 # Combine sheet data with processed file lengths, lyrics, and genre, then create JSON without outliers
 combine_data_and_create_json(directory_path, sheet_data, outlier_song_ids)
-
-# Find song IDs with length less than 33
-short_songs_ids = [sheet_data.iloc[index]['song_id'] for index, length in enumerate(song_lengths) if length < 33]
-short_songs_ids = [int(song_id) for song_id in short_songs_ids]
-
-# Print the song IDs
-print(f"Song IDs with length less than 33: {short_songs_ids}")
 
 # Create a box plot
 plt.figure(figsize=(8, 6))

@@ -30,7 +30,8 @@ def process_file(file_path):
         # Process lyrics to remove unwanted parts
         line = re.sub(r'\[.*?\]', '', line)  # Remove content in square brackets
         line = re.sub(r'^.*?：', '', line)  # Remove text before the colon
-        line = re.sub(r'[\"（）～【】“”()~[]"]', ' ', line)  # Replace unwanted characters with space
+        # Replace unwanted characters with space
+        line = re.sub(r'[\"（）～【】“”()~[\]]', ' ', line)  # Add more unwanted characters here
         line = line.strip()  # Strip any leading or trailing spaces
         
         if line:
