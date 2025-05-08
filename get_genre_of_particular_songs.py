@@ -207,7 +207,7 @@ def combine_data_and_create_json(directory_path, sheet_data, outlier_song_ids, s
         }
 
     # Save to JSON
-    with open('songs_data_filtered_Chinese_selected.json', 'w', encoding='utf-8') as json_file:
+    with open('json/songs_data_filtered_Chinese_selected.json', 'w', encoding='utf-8') as json_file:
         json.dump(combined_data, json_file, ensure_ascii=False, indent=4)
 
     print("JSON file created successfully with selected songs.")

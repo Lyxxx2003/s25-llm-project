@@ -73,7 +73,7 @@ def combine_data_and_create_json(directory_path, sheet_data, outlier_song_ids):
         # Add the song data to the combined_data dictionary
         combined_data[song_id] = {
             "title": title,
-            "lyricist": lyricist,
+            "lyricist(s)": lyricist,
             "genre": [genre],  # Use genre from the CSV
             "length": length,
             "lyrics": lyrics  # Store the processed lyrics

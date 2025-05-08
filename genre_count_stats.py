@@ -2,7 +2,7 @@ import json
 import pandas as pd
 
 # Load the songs data from the JSON file
-with open('songs_data_filtered_Chinese.json', 'r', encoding='utf-8') as json_file:
+with open('json/songs_data_filtered_Chinese.json', 'r', encoding='utf-8') as json_file:
     combined_data = json.load(json_file)
 
 # Initialize an empty dictionary to store the count of each genre
