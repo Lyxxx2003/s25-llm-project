@@ -80,14 +80,14 @@ def combine_data_and_create_json(directory_path, sheet_data, outlier_song_ids):
         }
 
     # Save to JSON
-    with open('test2_data.json', 'w', encoding='utf-8') as json_file:
+    with open('json/testing_data_2.json', 'w', encoding='utf-8') as json_file:
         json.dump(combined_data, json_file, ensure_ascii=False, indent=4)
 
     print("JSON file created successfully without outliers.")
 
 # Provide the directory path where the text files are stored
 directory_path = './test2_lyrics'  # Change this to the path of your folder
-data_file_path = './test2_data.csv'  # Path to your data CSV file
+data_file_path = 'csv/test2_data.csv'  # Path to your data CSV file
 
 # Fetch the data from CSV file
 sheet_data = get_data_from_csv(data_file_path)
