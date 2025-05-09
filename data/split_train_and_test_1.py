@@ -18,11 +18,8 @@ for song in songs_data.values():
     author_all_songs[song["lyricist(s)"]].append(song)
 
 # Build pair sets
-per_genre_same = []
-per_genre_diff = []
-cross_genre_same = []
-cross_genre_diff = []
-used_authors = set()
+per_genre_same, per_genre_diff = [], []
+cross_genre_same, cross_genre_diff = [], []
 
 for genre, author_map in genre_author_songs.items():
     authors = list(author_map.keys())
@@ -32,14 +29,12 @@ for genre, author_map in genre_author_songs.items():
             for i in range(len(songs)):
                 for j in range(i+1, len(songs)):
                     per_genre_same.append((songs[i], songs[j], 1))
-                    used_authors.update([author])
     for i in range(len(authors)):
         for j in range(i+1, len(authors)):
             s1 = random.choice(author_map[authors[i]])
             s2 = random.choice(author_map[authors[j]])
             if set(s1['genre']) & set(s2['genre']):
                 per_genre_diff.append((s1, s2, 0))
-                used_authors.update([authors[i], authors[j]])
 
 for author, songs in author_all_songs.items():
     genres = defaultdict(list)
@@ -49,11 +44,9 @@ for author, songs in author_all_songs.items():
     g_list = list(genres.items())
     for i in range(len(g_list)):
         for j in range(i+1, len(g_list)):
-            s1_list, s2_list = g_list[i][1], g_list[j][1]
-            s1 = random.choice(s1_list)
-            s2 = random.choice(s2_list)
+            s1 = random.choice(g_list[i][1])
+            s2 = random.choice(g_list[j][1])
             cross_genre_same.append((s1, s2, 1))
-            used_authors.add(author)
 
 authors = list(author_all_songs.keys())
 for i in range(len(authors)):
@@ -63,46 +56,49 @@ for i in range(len(authors)):
         s2 = random.choice(author_all_songs[a2])
         if not set(s1['genre']) & set(s2['genre']):
             cross_genre_diff.append((s1, s2, 0))
-            used_authors.update([a1, a2])
 
-# Balance and combine
+# ---------------- Balance per-genre and cross-genre ----------------
 random.shuffle(per_genre_same)
 random.shuffle(per_genre_diff)
 random.shuffle(cross_genre_same)
 random.shuffle(cross_genre_diff)
+
 per_genre_n = min(len(per_genre_same), len(per_genre_diff))
 cross_genre_n = min(len(cross_genre_same), len(cross_genre_diff))
-per_genre_pairs = per_genre_same[:per_genre_n] + per_genre_diff[:per_genre_n]
-cross_genre_pairs = cross_genre_same[:cross_genre_n] + cross_genre_diff[:cross_genre_n]
+balanced_n = min(per_genre_n, cross_genre_n)
+
+per_genre_pairs = per_genre_same[:balanced_n] + per_genre_diff[:balanced_n]
+cross_genre_pairs = cross_genre_same[:balanced_n] + cross_genre_diff[:balanced_n]
 all_data = per_genre_pairs + cross_genre_pairs
 random.shuffle(all_data)
 
-# Ensure all authors covered
+# ---------------- Ensure all authors appear ----------------
 all_authors = set(author_all_songs.keys())
 covered_authors = set()
 for s1, s2, _ in all_data:
-    covered_authors.add(s1['lyricist(s)'])
-    covered_authors.add(s2['lyricist(s)'])
+    covered_authors.update([s1['lyricist(s)'], s2['lyricist(s)']])
 missing_authors = all_authors - covered_authors
 for author in missing_authors:
     songs = author_all_songs[author]
     if len(songs) >= 2:
         all_data.append((songs[0], songs[1], 1))
     elif len(songs) == 1:
-        partner_author = random.choice([a for a in author_all_songs if a != author and len(author_all_songs[a]) > 0])
+        partner_author = random.choice([a for a in author_all_songs if a != author and author_all_songs[a]])
         partner_song = random.choice(author_all_songs[partner_author])
         all_data.append((songs[0], partner_song, 0))
 
-# ---------------- Split (No Overlap) ----------------
+# ---------------- Deduplicate by canonical key ----------------
 def pair_key(s1, s2):
     return tuple(sorted([s1["lyrics"], s2["lyrics"]]))
 
-all_keys = list({pair_key(s1, s2): (s1, s2, label) for s1, s2, label in all_data}.items())
-random.shuffle(all_keys)
+deduped = list({pair_key(s1, s2): (s1, s2, label) for s1, s2, label in all_data}.items())
+random.shuffle(deduped)
 
-split_idx = int(0.8 * len(all_keys))
-train_data = [v for _, v in all_keys[:split_idx]]
-test_data = [v for _, v in all_keys[split_idx:]]
+# ---------------- Limit to 1500 and split 1200/300 ----------------
+final = [v for _, v in deduped]
+split_idx = int(0.8 * len(final))
+train_data = final[:split_idx]
+test_data = final[split_idx:]
 
 # ---------------- Histogram ----------------
 def plot_hist(data, title, filename):
@@ -128,7 +124,7 @@ def calc_author_dist(pairs):
             dist[g].add(s2["lyricist(s)"])
     return {g: len(dist[g]) for g in dist}
 
-print(f"\nTotal all_data pairs: {len(all_keys)}")
+print(f"\nTotal all_data pairs: {len(final)}")
 print(f"Total train_data pairs: {len(train_data)}")
 print(f"Total test_1_data pairs: {len(test_data)}")
 
