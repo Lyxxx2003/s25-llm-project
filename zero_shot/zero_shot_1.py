@@ -12,7 +12,7 @@ with open('../json/testing_data_1.json', 'r') as file:
 test_data = test_data_1
 
 # Initialize the Together client
-client = Together(api_key="YOUR_API_KEY")
+client = Together(api_key="1538e1a79bb33932ef616714476f3bec56873bc59fee18b8807de5befc80609c")
 
 # Define the prompt
 prompt = "验证两段输入文本是否由同一位作者撰写。分析输入文本的写作风格，忽略主题和内容的差异。推理应基于语言特征，例如动词、标点符号、稀有词汇、词缀、幽默、讽刺、打字错误和拼写错误等。输出应遵循以下格式：0 或 1（0表示不同作者，1表示相同作者）。"
