@@ -80,17 +80,18 @@ def combine_data_and_create_json(directory_path, sheet_data, outlier_song_ids):
         }
 
     # Save to JSON
-    with open('../../json/testing_data_2.json', 'w', encoding='utf-8') as json_file:
+    with open('json/testing_data_2.json', 'w', encoding='utf-8') as json_file:
         json.dump(combined_data, json_file, ensure_ascii=False, indent=4)
 
     print("JSON file created successfully without outliers.")
 
 # Provide the directory path where the text files are stored
-directory_path = '../raw_lyrics/test_2'  # Change this to the path of your folder
-data_file_path = '../../csv/test_2_data.csv'  # Path to your data CSV file
+directory_path = 'data/raw_lyrics/test_2'  # Change this to the path of your folder
+data_file_path = 'csv/test_2_data.csv'  # Path to your data CSV file
 
 # Fetch the data from CSV file
 sheet_data = get_data_from_csv(data_file_path)
+print("sheet data: ", sheet_data)
 
 # Calculate the song lengths
 song_lengths = []
@@ -102,6 +103,8 @@ for index, row in sheet_data.iterrows():
     if os.path.exists(file_path):
         _, length = process_file(file_path)  # Get the processed length of the lyrics
         song_lengths.append(length)
+
+print("song lengths: ", song_lengths)
 
 # Calculate and print the median length of all songs
 median_length, mean_length = calculate_median_length(sheet_data, directory_path)

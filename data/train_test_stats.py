@@ -3,13 +3,13 @@ from collections import defaultdict, Counter
 
 # ------------ Load Datasets ------------
 
-with open("../json/training_data.json", "r") as f:
+with open("json/training_data.json", "r") as f:
     train_data = json.load(f)
 
-with open("../json/testing_data_1.json", "r") as f:
+with open("json/testing_data_1.json", "r") as f:
     test_1_data = json.load(f)
 
-with open("../json/testing_data_2.json", "r") as f:
+with open("json/testing_data_2.json", "r") as f:
     test_2_data = json.load(f)
 
 # ------------ Utility Functions ------------
