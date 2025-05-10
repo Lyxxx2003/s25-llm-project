@@ -6,7 +6,7 @@ from matplotlib import font_manager as fm
 
 chinese_font = fm.FontProperties(fname="../SimHei.ttf")
 
-with open("../json/songs_data_filtered_Chinese.json", "r") as file:
+with open("json/songs_data_filtered_Chinese.json", "r") as file:
     songs_data = json.load(file)
 
 # Group by genre and lyricist
@@ -179,8 +179,8 @@ collect_stats(train_data, name="Train Set")
 collect_stats(test_data, name="test_1 Set")
 
 # ---------------- Save ----------------
-with open("../json/training_data.json", "w") as f:
+with open("json/training_data.json", "w") as f:
     json.dump(train_data, f, ensure_ascii=False, indent=2)
 
-with open("../json/testing_data_1.json", "w") as f:
+with open("json/testing_data_1.json", "w") as f:
     json.dump(test_data, f, ensure_ascii=False, indent=2)

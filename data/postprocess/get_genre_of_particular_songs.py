@@ -216,8 +216,8 @@ def combine_data_and_create_json(directory_path, sheet_data, outlier_song_ids, s
 song_ids_to_process = [118, 194, 463, 470, 519, 728, 857, 885, 903, 926, 965, 985]  # Replace this with your specific song IDs
 
 # Provide the directory path where the text files are stored
-directory_path = './lyrics'  # Change this to the path of your folder
-data_file_path = './data.csv'  # Path to your data CSV file
+directory_path = 'data/raw_lyrics/train_test_1'  # Change this to the path of your folder
+data_file_path = 'csv/train_test_1_data.csv'  # Path to your data CSV file
 
 # Fetch the data from CSV file
 sheet_data = get_data_from_csv(data_file_path)

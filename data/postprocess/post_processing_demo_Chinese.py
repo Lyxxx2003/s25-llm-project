@@ -244,8 +244,8 @@ def combine_data_and_create_json(directory_path, sheet_data, outlier_song_ids):
 #     print("Data split completed: 'training_data.json' and 'testing_data.json' created.")
 
 # Provide the directory path where the text files are stored
-directory_path = './lyrics'  # Change this to the path of your folder
-data_file_path = './data.csv'  # Path to your data CSV file
+directory_path = 'data/raw_lyrics/train_test_1'  # Change this to the path of your folder
+data_file_path = 'csv/train_test_1_data.csv'  # Path to your data CSV file
 
 # Fetch the data from CSV file
 sheet_data = get_data_from_csv(data_file_path)

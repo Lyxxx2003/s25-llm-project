@@ -9,7 +9,7 @@ import matplotlib.font_manager as fm
 chinese_font = fm.FontProperties(fname="../SimHei.ttf")
 
 # ======== DATA LOADING & PREPROCESSING ========
-with open("../json/test2_data.json", "r") as file:
+with open("json/test2_data.json", "r") as file:
     songs_data = json.load(file)
 
 # Data structures
@@ -151,7 +151,7 @@ else:
     print("Warning: Insufficient data for label balancing")
 
 # Save dataset
-with open("../json/testing_data_2.json", "w") as f:
+with open("json/testing_data_2.json", "w") as f:
     json.dump(final_data, f, ensure_ascii=False, indent=2)
 
 
