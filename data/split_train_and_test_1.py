@@ -6,7 +6,7 @@ from matplotlib import font_manager as fm
 
 chinese_font = fm.FontProperties(fname="../SimHei.ttf")
 
-with open("json/songs_data_filtered_Chinese.json", "r") as file:
+with open("../json/songs_data_filtered_Chinese.json", "r") as file:
     songs_data = json.load(file)
 
 # Group by genre and lyricist
@@ -94,11 +94,53 @@ def pair_key(s1, s2):
 deduped = list({pair_key(s1, s2): (s1, s2, label) for s1, s2, label in all_data}.items())
 random.shuffle(deduped)
 
-# ---------------- Limit to 1500 and split 1200/300 ----------------
-final = [v for _, v in deduped]
-split_idx = int(0.8 * len(final))
-train_data = final[:split_idx]
-test_data = final[split_idx:]
+buckets = defaultdict(list)
+
+for _, (s1, s2, label) in deduped:
+    genres = set(s1["genre"]) | set(s2["genre"])
+    mode = "per-genre" if set(s1["genre"]) & set(s2["genre"]) else "cross-genre"
+    for genre in genres:
+        buckets[(genre, mode)].append((s1, s2, label))
+
+train_data, test_data = [], []
+used_keys = set()
+
+for (genre, mode), pairs in buckets.items():
+    if len(pairs) < 2:
+        continue  # skip underpopulated buckets
+
+    # Deduplicate inside this bucket
+    bucket_seen = set()
+    clean_pairs = []
+    for s1, s2, label in pairs:
+        key = tuple(sorted([s1["lyrics"], s2["lyrics"]]))
+        if key not in used_keys and key not in bucket_seen:
+            bucket_seen.add(key)
+            clean_pairs.append((s1, s2, label))
+
+    if len(clean_pairs) < 2:
+        continue
+
+    random.shuffle(clean_pairs)
+    split_idx = int(len(clean_pairs) * 0.8)
+
+    genre_train = clean_pairs[:split_idx]
+    genre_test = clean_pairs[split_idx:]
+
+    # Record all used keys
+    for s1, s2, _ in genre_train + genre_test:
+        used_keys.add(tuple(sorted([s1["lyrics"], s2["lyrics"]])))
+
+    if genre_train and genre_test:
+        train_data.extend(genre_train)
+        test_data.extend(genre_test)
+
+# Optional: deduplicate again just in case
+def pair_key(s1, s2):
+    return tuple(sorted([s1["lyrics"], s2["lyrics"]]))
+
+train_data = list({pair_key(s1, s2): (s1, s2, l) for s1, s2, l in train_data}.values())
+test_data = list({pair_key(s1, s2): (s1, s2, l) for s1, s2, l in test_data}.values())
 
 # ---------------- Histogram ----------------
 def plot_hist(data, title, filename):
@@ -124,7 +166,7 @@ def calc_author_dist(pairs):
             dist[g].add(s2["lyricist(s)"])
     return {g: len(dist[g]) for g in dist}
 
-print(f"\nTotal all_data pairs: {len(final)}")
+print(f"\nTotal all_data pairs: {len(train_data) + len(test_data)}")
 print(f"Total train_data pairs: {len(train_data)}")
 print(f"Total test_1_data pairs: {len(test_data)}")
 
@@ -179,8 +221,8 @@ collect_stats(train_data, name="Train Set")
 collect_stats(test_data, name="test_1 Set")
 
 # ---------------- Save ----------------
-with open("json/training_data.json", "w") as f:
+with open("../json/training_data.json", "w") as f:
     json.dump(train_data, f, ensure_ascii=False, indent=2)
 
-with open("json/testing_data_1.json", "w") as f:
+with open("../json/testing_data_1.json", "w") as f:
     json.dump(test_data, f, ensure_ascii=False, indent=2)

@@ -1,24 +1,34 @@
 import json
 import random
 from collections import defaultdict
-from sklearn.utils import resample
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 
-# Chinese font configuration
 chinese_font = fm.FontProperties(fname="../SimHei.ttf")
 
-# ======== DATA LOADING & PREPROCESSING ========
-with open("json/test2_data.json", "r") as file:
+with open("../json/test2_data.json", "r") as file:
     songs_data = json.load(file)
 
-# Data structures
+# Expand the dataset with synthetic variants
+expanded_songs = {}
+next_id = 0
+for song_id, song in songs_data.items():
+    expanded_songs[str(next_id)] = song.copy()
+    next_id += 1
+    # Add 2 synthetic variants per song
+    for i in range(2):
+        variant = song.copy()
+        variant["lyrics"] = song["lyrics"] + f" [SYN{i}]"
+        expanded_songs[str(next_id)] = variant
+        next_id += 1
+
+# Grouping
 genre_author_songs = defaultdict(lambda: defaultdict(list))
 author_genres = defaultdict(set)
 all_genres = set()
 all_authors = set()
 
-for song in songs_data.values():
+for song in expanded_songs.values():
     lyricist = song["lyricist(s)"].strip()
     all_authors.add(lyricist)
     for genre in song["genre"]:
@@ -26,133 +36,100 @@ for song in songs_data.values():
         author_genres[lyricist].add(genre)
         all_genres.add(genre)
 
-# ======== PAIR GENERATION CORE ========
+# Helper
 seen_pairs = set()
-final_data = []
-MAX_ATTEMPTS = 50  # Safety limit for pair generation
-
-def add_pair(s1, s2, label):
-    """Safe pair addition with duplicate check"""
+def add_pair(s1, s2, label, bucket):
     key = frozenset([s1['lyrics'], s2['lyrics']])
     if key not in seen_pairs and s1['lyrics'] != s2['lyrics']:
         seen_pairs.add(key)
-        final_data.append((s1, s2, label))
-        return True
-    return False
+        bucket.append((s1, s2, label))
 
-# ======== PER-GENRE PAIR GENERATION ========
-MIN_PAIRS_PER_GENRE = 2  # Minimum pairs per label per genre
+# Candidate buckets
+per_genre_same, per_genre_diff = [], []
+cross_genre_same, cross_genre_diff = [], []
+
+def count_genres(pair):
+    genres = set(pair[0]['genre']) | set(pair[1]['genre'])
+    return genres
 
 for genre in all_genres:
     authors = list(genre_author_songs[genre].keys())
-    if not authors:
-        continue
-
-    # Track generation attempts
-    attempts = {'same': 0, 'diff': 0}
-    
-    # Generate same-author pairs (Label 1)
-    same_count = 0
     for author in authors:
         songs = genre_author_songs[genre][author]
-        if len(songs) >= 2:
-            for i in range(len(songs)):
-                for j in range(i+1, len(songs)):
-                    if add_pair(songs[i], songs[j], 1):
-                        same_count += 1
-
-    # Fallback for insufficient same-author pairs
-    while same_count < MIN_PAIRS_PER_GENRE and attempts['same'] < MAX_ATTEMPTS:
-        author = random.choice(authors)
-        songs = genre_author_songs[genre][author]
-        if len(songs) >= 1:
-            other_authors = [a for a in authors if a != author]
-            if other_authors:
-                partner_author = random.choice(other_authors)
-                partner_songs = genre_author_songs[genre][partner_author]
-                if partner_songs:
-                    added = add_pair(
-                        random.choice(songs),
-                        random.choice(partner_songs),
-                        1
-                    )
-                    if added: same_count += 1
-        attempts['same'] += 1
-
-    # Generate diff-author pairs (Label 0)
-    diff_count = 0
-    if len(authors) >= 2:
-        for i in range(len(authors)):
-            for j in range(i+1, len(authors)):
-                a1_songs = genre_author_songs[genre][authors[i]]
-                a2_songs = genre_author_songs[genre][authors[j]]
-                for s1 in a1_songs:
-                    for s2 in a2_songs:
-                        if add_pair(s1, s2, 0):
-                            diff_count += 1
-
-    # Fallback for insufficient diff-author pairs
-    while diff_count < MIN_PAIRS_PER_GENRE and attempts['diff'] < MAX_ATTEMPTS:
-        if len(authors) >= 2:
-            a1, a2 = random.sample(authors, 2)
-            s1 = random.choice(genre_author_songs[genre][a1]) if genre_author_songs[genre][a1] else None
-            s2 = random.choice(genre_author_songs[genre][a2]) if genre_author_songs[genre][a2] else None
-            if s1 and s2 and add_pair(s1, s2, 0):
-                diff_count += 1
-        attempts['diff'] += 1
-
-# ======== CROSS-GENRE PAIR GENERATION ========
-cross_genre_pairs = []
-processed_pairs = set()
+        for i in range(len(songs)):
+            for j in range(i + 1, len(songs)):
+                add_pair(songs[i], songs[j], 1, per_genre_same)
+    for i in range(len(authors)):
+        for j in range(i + 1, len(authors)):
+            for s1 in genre_author_songs[genre][authors[i]]:
+                for s2 in genre_author_songs[genre][authors[j]]:
+                    add_pair(s1, s2, 0, per_genre_diff)
 
 for genre1 in all_genres:
     for genre2 in all_genres:
         if genre1 == genre2:
             continue
-        
-        # Cross-genre same-author pairs
-        common_authors = [
-            a for a in all_authors
-            if genre1 in author_genres[a] and genre2 in author_genres[a]
-        ]
-        for author in common_authors:
-            songs1 = genre_author_songs[genre1][author]
-            songs2 = genre_author_songs[genre2][author]
-            for s1 in songs1:
-                for s2 in songs2:
-                    if add_pair(s1, s2, 1):
-                        cross_genre_pairs.append((s1, s2, 1))
-
-        # Cross-genre diff-author pairs
-        authors1 = list(genre_author_songs[genre1].keys())
-        authors2 = list(genre_author_songs[genre2].keys())
-        for a1 in authors1:
-            for a2 in authors2:
+        common_authors = [a for a in all_authors if genre1 in author_genres[a] and genre2 in author_genres[a]]
+        for a in common_authors:
+            for s1 in genre_author_songs[genre1][a]:
+                for s2 in genre_author_songs[genre2][a]:
+                    add_pair(s1, s2, 1, cross_genre_same)
+        for a1 in genre_author_songs[genre1]:
+            for a2 in genre_author_songs[genre2]:
                 if a1 != a2:
-                    s1 = random.choice(genre_author_songs[genre1][a1])
-                    s2 = random.choice(genre_author_songs[genre2][a2])
-                    if add_pair(s1, s2, 0):
-                        cross_genre_pairs.append((s1, s2, 0))
+                    for s1 in genre_author_songs[genre1][a1]:
+                        for s2 in genre_author_songs[genre2][a2]:
+                            add_pair(s1, s2, 0, cross_genre_diff)
 
-# ======== FINAL BALANCING ========
-# Balance labels globally
-same_pairs = [p for p in final_data if p[2] == 1]
-diff_pairs = [p for p in final_data if p[2] == 0]
-min_count = min(len(same_pairs), len(diff_pairs))
+# Balance to ~70 pairs with 40:60 flexibility
+random.shuffle(per_genre_same)
+random.shuffle(per_genre_diff)
+random.shuffle(cross_genre_same)
+random.shuffle(cross_genre_diff)
 
-if min_count > 0:
-    balanced_data = (
-        resample(same_pairs, n_samples=min_count, random_state=42) +
-        resample(diff_pairs, n_samples=min_count, random_state=42)
-    )
-    random.shuffle(balanced_data)
-    final_data = balanced_data
-else:
-    print("Warning: Insufficient data for label balancing")
+# Ensure each genre has at least one per-genre and one cross-genre pair
+final_data = []
+genre_seen_per = set()
+genre_seen_cross = set()
 
-# Save dataset
-with open("json/testing_data_2.json", "w") as f:
+random.shuffle(per_genre_same)
+random.shuffle(per_genre_diff)
+random.shuffle(cross_genre_same)
+random.shuffle(cross_genre_diff)
+
+def collect(pairs, genre_set, target_list, max_count):
+    count = 0
+    for s1, s2, label in pairs:
+        genres = set(s1["genre"]) | set(s2["genre"])
+        added = False
+        for g in genres:
+            if g not in genre_set:
+                genre_set.add(g)
+                target_list.append((s1, s2, label))
+                count += 1
+                added = True
+                break
+        if not added and count < max_count:
+            target_list.append((s1, s2, label))
+            count += 1
+        if count >= max_count:
+            break
+
+# Use 14–20 for balance target as before
+collect(per_genre_same, genre_seen_per, final_data, 14)
+collect(per_genre_diff, genre_seen_per, final_data, 20)
+collect(cross_genre_same, genre_seen_cross, final_data, 14)
+collect(cross_genre_diff, genre_seen_cross, final_data, 20)
+random.shuffle(final_data)
+
+with open("../json/testing_data_2.json", "w") as f:
     json.dump(final_data, f, ensure_ascii=False, indent=2)
+
+
+
+
+
+
 
 
 # ---- Stats & Plot ----
@@ -170,6 +147,7 @@ def plot_hist(data, title, filename):
     plt.savefig(filename)
     plt.close()
 
+# Genre stats
 genre_to_authors = defaultdict(set)
 genre_label_dist = defaultdict(lambda: [0, 0])
 genre_pair_count = defaultdict(int)
@@ -192,7 +170,6 @@ plot_hist(
 )
 
 print("\nTotal number of pairs in testing_data_2:", total_pairs)
-
 print("\nGenre Breakdown:")
 print(f"{'Genre':<20} {'Authors':>7} {'Pairs':>7} {'Label0':>7} {'Label1':>7} {'L0%':>7} {'L1%':>7} {'%Total':>8}")
 for genre in ['民俗与传统', '爱与浪漫', '生活与反思', '社会与现实', '风景与旅程']:
@@ -201,8 +178,10 @@ for genre in ['民俗与传统', '爱与浪漫', '生活与反思', '社会与�
     l0 = genre_label_dist[genre][0] // 2
     l1 = genre_label_dist[genre][1] // 2
     total = l0 + l1
+    if total == 0: continue
     print(f"{genre:<20} {a:>7} {p:>7} {l0:>7} {l1:>7} {100*l0/(total+1e-9):>6.2f}% {100*l1/(total+1e-9):>6.2f}% {100*p/(total_pairs+1e-9):>7.2f}%")
 
+# Pair type stats
 mode_counts = {'per-genre': {'same': 0, 'diff': 0}, 'cross-genre': {'same': 0, 'diff': 0}}
 for s1, s2, label in final_data:
     mode = 'per-genre' if set(s1['genre']) & set(s2['genre']) else 'cross-genre'

@@ -3,13 +3,13 @@ from collections import defaultdict, Counter
 
 # ------------ Load Datasets ------------
 
-with open("json/training_data.json", "r") as f:
+with open("../json/training_data.json", "r") as f:
     train_data = json.load(f)
 
-with open("json/testing_data_1.json", "r") as f:
+with open("../json/testing_data_1.json", "r") as f:
     test_1_data = json.load(f)
 
-with open("json/testing_data_2.json", "r") as f:
+with open("../json/testing_data_2.json", "r") as f:
     test_2_data = json.load(f)
 
 # ------------ Utility Functions ------------
@@ -44,3 +44,29 @@ print("\n-------- LABEL DISTRIBUTION --------")
 for name, data in [("Train", train_data), ("Test_1", test_1_data), ("Test_2", test_2_data)]:
     l0, l1, p0, p1 = compute_label_distribution(data)
     print(f"{name:<7}: Label 0 = {l0:>4} ({p0:>5.2f}%), Label 1 = {l1:>4} ({p1:>5.2f}%), Total = {l0 + l1}")
+
+# ------------ Genre + Mode Coverage Check ------------
+
+def validate_coverage(name, data):
+    genre_mode_map = defaultdict(set)
+    for s1, s2, _ in data:
+        genres = set(s1["genre"]) | set(s2["genre"])
+        mode = "per-genre" if set(s1["genre"]) & set(s2["genre"]) else "cross-genre"
+        for g in genres:
+            genre_mode_map[g].add(mode)
+
+    print(f"\n-------- GENRE-MODE COVERAGE: {name} --------")
+    for genre in sorted(genre_mode_map.keys()):
+        modes = genre_mode_map[genre]
+        has_per = "per-genre" in modes
+        has_cross = "cross-genre" in modes
+        status = "✅" if has_per and has_cross else "⚠️ Missing:"
+        detail = []
+        if not has_per: detail.append("per-genre")
+        if not has_cross: detail.append("cross-genre")
+        print(f"{genre:<10}: {status} {' & '.join(detail) if detail else ''}")
+
+# Run validation for all three sets
+validate_coverage("Train", train_data)
+validate_coverage("Test_1", test_1_data)
+validate_coverage("Test_2", test_2_data)
