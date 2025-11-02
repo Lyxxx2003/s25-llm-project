@@ -24,8 +24,12 @@ def evaluate_metrics(y_true, y_pred):
 # Collect genres
 all_genres = set()
 for item in test_data:
-    all_genres.update(item[0]['genre'])
-    all_genres.update(item[1]['genre'])
+    if isinstance(item, dict):
+        all_genres.update(item['song1']['genre'])
+        all_genres.update(item['song2']['genre'])
+    else:
+        all_genres.update(item[0]['genre'])
+        all_genres.update(item[1]['genre'])
 
 # Calculate metrics per genre
 def calculate_metrics_per_genre(results_df, genres):

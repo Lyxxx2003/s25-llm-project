@@ -1,6 +1,5 @@
 import json
 from together import Together
-from sklearn import metrics
 import pandas as pd
 from tqdm import tqdm
 

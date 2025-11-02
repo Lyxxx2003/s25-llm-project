@@ -1,6 +1,5 @@
 import json
 from together import Together
-from sklearn import metrics
 import pandas as pd
 from tqdm import tqdm
 
@@ -9,7 +8,7 @@ with open('../json/testing_data_1.json', 'r') as file:
     test_data_1 = json.load(file)
 
 # Combine test data
-test_data = test_data_1
+test_data = test_data_1[:1000]
 
 # Initialize the Together client
 client = Together(api_key="YOUR_API_KEY")
