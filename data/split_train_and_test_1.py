@@ -1,7 +1,6 @@
 import json
 import random
-from collections import defaultdict, Counter
-import matplotlib.pyplot as plt
+from collections import defaultdict
 from matplotlib import font_manager as fm
 
 chinese_font = fm.FontProperties(fname="../SimHei.ttf")
@@ -17,59 +16,73 @@ for song in songs_data.values():
         genre_author_songs[genre][song["lyricist(s)"]].append(song)
     author_all_songs[song["lyricist(s)"]].append(song)
 
-# Build pair sets
-per_genre_same, per_genre_diff = [], []
-cross_genre_same, cross_genre_diff = [], []
+# Build pair sets using 4-category system
+cat1_same_author_same_genre = []  # Category 1
+cat2_diff_author_same_genre = []  # Category 2
+cat3_diff_author_diff_genre = []  # Category 3
+cat4_same_author_diff_genre = []  # Category 4
 
+# Helper function to avoid duplicate pairs
+seen_pairs = set()
+def add_pair(s1, s2, category, bucket):
+    key = frozenset([s1['lyrics'], s2['lyrics']])
+    if key not in seen_pairs and s1['lyrics'] != s2['lyrics']:
+        seen_pairs.add(key)
+        bucket.append((s1, s2, category))
+
+# Category 1: Same Author, Same Genre
 for genre, author_map in genre_author_songs.items():
-    authors = list(author_map.keys())
-    for author in authors:
-        songs = author_map[author]
+    for author, songs in author_map.items():
         if len(songs) >= 2:
             for i in range(len(songs)):
                 for j in range(i+1, len(songs)):
-                    per_genre_same.append((songs[i], songs[j], 1))
+                    add_pair(songs[i], songs[j], 1, cat1_same_author_same_genre)
+
+# Category 2: Different Author, Same Genre
+for genre, author_map in genre_author_songs.items():
+    authors = list(author_map.keys())
     for i in range(len(authors)):
         for j in range(i+1, len(authors)):
-            s1 = random.choice(author_map[authors[i]])
-            s2 = random.choice(author_map[authors[j]])
-            if set(s1['genre']) & set(s2['genre']):
-                per_genre_diff.append((s1, s2, 0))
+            for s1 in author_map[authors[i]]:
+                for s2 in author_map[authors[j]]:
+                    add_pair(s1, s2, 2, cat2_diff_author_same_genre)
 
+# Category 4: Same Author, Different Genre  
 for author, songs in author_all_songs.items():
-    genres = defaultdict(list)
+    author_genres = defaultdict(list)
     for song in songs:
         for g in song['genre']:
-            genres[g].append(song)
-    g_list = list(genres.items())
-    for i in range(len(g_list)):
-        for j in range(i+1, len(g_list)):
-            s1 = random.choice(g_list[i][1])
-            s2 = random.choice(g_list[j][1])
-            cross_genre_same.append((s1, s2, 1))
+            author_genres[g].append(song)
+    
+    genres_list = list(author_genres.keys())
+    for i in range(len(genres_list)):
+        for j in range(i+1, len(genres_list)):
+            genre1, genre2 = genres_list[i], genres_list[j]
+            for s1 in author_genres[genre1]:
+                for s2 in author_genres[genre2]:
+                    add_pair(s1, s2, 4, cat4_same_author_diff_genre)
 
+# Category 3: Different Author, Different Genre
 authors = list(author_all_songs.keys())
 for i in range(len(authors)):
     for j in range(i+1, len(authors)):
-        a1, a2 = authors[i], authors[j]
-        s1 = random.choice(author_all_songs[a1])
-        s2 = random.choice(author_all_songs[a2])
-        if not set(s1['genre']) & set(s2['genre']):
-            cross_genre_diff.append((s1, s2, 0))
+        author1, author2 = authors[i], authors[j]
+        # Get all genre combinations for these two authors
+        for s1 in author_all_songs[author1]:
+            for s2 in author_all_songs[author2]:
+                # Only include if they don't share any genres (different genre requirement)  
+                if not set(s1['genre']) & set(s2['genre']):
+                    add_pair(s1, s2, 3, cat3_diff_author_diff_genre)
 
-# ---------------- Balance per-genre and cross-genre ----------------
-random.shuffle(per_genre_same)
-random.shuffle(per_genre_diff)
-random.shuffle(cross_genre_same)
-random.shuffle(cross_genre_diff)
+# ---------------- Balance 4 categories ----------------
 
-per_genre_n = min(len(per_genre_same), len(per_genre_diff))
-cross_genre_n = min(len(cross_genre_same), len(cross_genre_diff))
-balanced_n = min(per_genre_n, cross_genre_n)
+random.shuffle(cat1_same_author_same_genre)
+random.shuffle(cat2_diff_author_same_genre)
+random.shuffle(cat3_diff_author_diff_genre)
+random.shuffle(cat4_same_author_diff_genre)
 
-per_genre_pairs = per_genre_same[:balanced_n] + per_genre_diff[:balanced_n]
-cross_genre_pairs = cross_genre_same[:balanced_n] + cross_genre_diff[:balanced_n]
-all_data = per_genre_pairs + cross_genre_pairs
+# Combine all categories for balanced sampling
+all_data = cat1_same_author_same_genre + cat2_diff_author_same_genre + cat3_diff_author_diff_genre + cat4_same_author_diff_genre
 random.shuffle(all_data)
 
 # ---------------- Ensure all authors appear ----------------
@@ -142,87 +155,39 @@ def pair_key(s1, s2):
 train_data = list({pair_key(s1, s2): (s1, s2, l) for s1, s2, l in train_data}.values())
 test_data = list({pair_key(s1, s2): (s1, s2, l) for s1, s2, l in test_data}.values())
 
-# ---------------- Histogram ----------------
-def plot_hist(data, title, filename):
-    genre_order = ['民俗与传统', '爱与浪漫', '生活与反思', '社会与现实', '风景与旅程']
-    genres = [g for g in genre_order if g in data]
-    counts = [data[g] for g in genres]
-    plt.figure(figsize=(10, 5))
-    plt.bar(genres, counts)
-    plt.title(title, fontproperties=chinese_font)
-    plt.xlabel("流派", fontproperties=chinese_font)
-    plt.ylabel("独立作词人数量", fontproperties=chinese_font)
-    plt.xticks(rotation=45, ha="right", fontproperties=chinese_font)
-    plt.tight_layout()
-    plt.savefig(filename)
-    plt.close()
+# ---------------- Add mode information and save ----------------
+def add_mode_info(data):
+    """Add mode information based on category: 1,2 = per-genre; 3,4 = cross-genre"""
+    enhanced_data = []
+    for s1, s2, category in data:
+        # Determine mode based on category
+        if category in [1, 2]:
+            mode = "per-genre"
+        else:  # category in [3, 4]
+            mode = "cross-genre"
+        
+        # Create enhanced entry with mode info
+        enhanced_entry = {
+            "song1": s1,
+            "song2": s2, 
+            "category": category,
+            "mode": mode,
+            "label": 1 if category in [1, 4] else 0  # Same author = 1, Diff author = 0
+        }
+        enhanced_data.append(enhanced_entry)
+    return enhanced_data
 
-def calc_author_dist(pairs):
-    dist = defaultdict(set)
-    for s1, s2, _ in pairs:
-        for g in s1["genre"]:
-            dist[g].add(s1["lyricist(s)"])
-        for g in s2["genre"]:
-            dist[g].add(s2["lyricist(s)"])
-    return {g: len(dist[g]) for g in dist}
+# Add mode information to datasets
+train_data_enhanced = add_mode_info(train_data)
+test_data_enhanced = add_mode_info(test_data)
 
-print(f"\nTotal all_data pairs: {len(train_data) + len(test_data)}")
-print(f"Total train_data pairs: {len(train_data)}")
-print(f"Total test_1_data pairs: {len(test_data)}")
-
-plot_hist(calc_author_dist(train_data), "训练集中每个流派的独立作词人数量", "../images/train_data_hist.png")
-plot_hist(calc_author_dist(test_data), "测试集中每个流派的独立作词人数量", "../images/test_data_1_hist.png")
-plot_hist(calc_author_dist(train_data + test_data), "所有数据中的每个流派的独立作词人数量", "../images/all_data_hist.png")
-
-# ---------------- Stats ----------------
-def collect_stats(data, name="Dataset"):
-    genre_to_authors = defaultdict(set)
-    genre_label_dist = defaultdict(lambda: [0, 0])
-    genre_pair_count = defaultdict(int)
-    mode_counts = {'per-genre': {'same': 0, 'diff': 0}, 'cross-genre': {'same': 0, 'diff': 0}}
-
-    for s1, s2, label in data:
-        mode = 'per-genre' if set(s1['genre']) & set(s2['genre']) else 'cross-genre'
-        category = 'same' if label == 1 else 'diff'
-        mode_counts[mode][category] += 1
-
-        for g in s1['genre']:
-            genre_to_authors[g].add(s1['lyricist(s)'])
-            genre_label_dist[g][label] += 1
-            genre_pair_count[g] += 1
-        for g in s2['genre']:
-            genre_to_authors[g].add(s2['lyricist(s)'])
-            genre_label_dist[g][label] += 1
-            genre_pair_count[g] += 1
-
-    total_pairs = len(data)
-    print(f"\n{name} - Total number of pairs: {total_pairs}")
-    print(f"\n{name} - Genre Breakdown:")
-    print(f"{'Genre':<20} {'Authors':>7} {'Pairs':>7} {'Label0':>7} {'Label1':>7} {'L0%':>7} {'L1%':>7} {'%Total':>8}")
-    genre_order = ['民俗与传统', '爱与浪漫', '生活与反思', '社会与现实', '风景与旅程']
-    for genre in genre_order:
-        a = len(genre_to_authors[genre])
-        p = genre_pair_count[genre] // 2
-        l0 = genre_label_dist[genre][0] // 2
-        l1 = genre_label_dist[genre][1] // 2
-        total = l0 + l1
-        if total == 0: continue
-        print(f"{genre:<20} {a:>7} {p:>7} {l0:>7} {l1:>7} {100*l0/(total+1e-9):>6.2f}% {100*l1/(total+1e-9):>6.2f}% {100*p/(total_pairs+1e-9):>7.2f}%")
-
-    print(f"\n{name} - Pair Type Breakdown:")
-    for mode in ['per-genre', 'cross-genre']:
-        total = sum(mode_counts[mode].values())
-        same = mode_counts[mode]['same']
-        diff = mode_counts[mode]['diff']
-        if total == 0: continue
-        print(f"{mode:>10}: same-author = {same} ({100*same/total:.2f}%), diff-author = {diff} ({100*diff/total:.2f}%), total = {total} ({100*total/total_pairs:.2f}%)")
-
-collect_stats(train_data, name="Train Set")
-collect_stats(test_data, name="test_1 Set")
-
-# ---------------- Save ----------------
+# Save enhanced data
 with open("../json/training_data.json", "w") as f:
-    json.dump(train_data, f, ensure_ascii=False, indent=2)
+    json.dump(train_data_enhanced, f, ensure_ascii=False, indent=2)
 
 with open("../json/testing_data_1.json", "w") as f:
-    json.dump(test_data, f, ensure_ascii=False, indent=2)
+    json.dump(test_data_enhanced, f, ensure_ascii=False, indent=2)
+
+
+print(f"Saved {len(train_data_enhanced)} pairs to training_data.json")
+print(f"Saved {len(test_data_enhanced)} pairs to testing_data_1.json")
