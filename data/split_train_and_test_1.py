@@ -1,9 +1,6 @@
 import json
 import random
 from collections import defaultdict
-from matplotlib import font_manager as fm
-
-chinese_font = fm.FontProperties(fname="../SimHei.ttf")
 
 with open("../json/songs_data_filtered_Chinese.json", "r") as file:
     songs_data = json.load(file)
@@ -47,7 +44,7 @@ for genre, author_map in genre_author_songs.items():
                 for s2 in author_map[authors[j]]:
                     add_pair(s1, s2, 2, cat2_diff_author_same_genre)
 
-# Category 4: Same Author, Different Genre  
+# Category 4: Same Author, Different Genre (Increased sampling for balance)
 for author, songs in author_all_songs.items():
     author_genres = defaultdict(list)
     for song in songs:
@@ -55,24 +52,56 @@ for author, songs in author_all_songs.items():
             author_genres[g].append(song)
     
     genres_list = list(author_genres.keys())
-    for i in range(len(genres_list)):
-        for j in range(i+1, len(genres_list)):
-            genre1, genre2 = genres_list[i], genres_list[j]
-            for s1 in author_genres[genre1]:
-                for s2 in author_genres[genre2]:
-                    add_pair(s1, s2, 4, cat4_same_author_diff_genre)
+    if len(genres_list) >= 2:
+        # Increase combinations per author to get more Category 4 pairs
+        max_genre_pairs = min(6, len(genres_list) * (len(genres_list) - 1) // 2)  # Increased from 3 to 6
+        genre_pair_count = 0
+        
+        for i in range(len(genres_list)):
+            if genre_pair_count >= max_genre_pairs:
+                break
+            for j in range(i+1, len(genres_list)):
+                if genre_pair_count >= max_genre_pairs:  
+                    break
+                genre1, genre2 = genres_list[i], genres_list[j]
+                
+                # Increase songs per genre pair
+                songs1 = random.sample(author_genres[genre1], min(4, len(author_genres[genre1])))
+                songs2 = random.sample(author_genres[genre2], min(4, len(author_genres[genre2])))
+                
+                for s1 in songs1:
+                    for s2 in songs2:
+                        add_pair(s1, s2, 4, cat4_same_author_diff_genre)
+                
+                genre_pair_count += 1
 
-# Category 3: Different Author, Different Genre
+# Category 3: Different Author, Different Genre (Increased sampling for balance)
 authors = list(author_all_songs.keys())
+random.shuffle(authors)  # Randomize author pairs
+
+# Increase author pairs to get more Category 3 pairs
+max_author_pairs = min(300, len(authors) * (len(authors) - 1) // 2)  # Increased significantly
+author_pair_count = 0
+
 for i in range(len(authors)):
+    if author_pair_count >= max_author_pairs:
+        break
     for j in range(i+1, len(authors)):
+        if author_pair_count >= max_author_pairs:
+            break
         author1, author2 = authors[i], authors[j]
-        # Get all genre combinations for these two authors
-        for s1 in author_all_songs[author1]:
-            for s2 in author_all_songs[author2]:
+        
+        # Increase songs per author pair to get more combinations
+        songs1 = random.sample(author_all_songs[author1], min(5, len(author_all_songs[author1])))
+        songs2 = random.sample(author_all_songs[author2], min(5, len(author_all_songs[author2])))
+        
+        for s1 in songs1:
+            for s2 in songs2:
                 # Only include if they don't share any genres (different genre requirement)  
                 if not set(s1['genre']) & set(s2['genre']):
                     add_pair(s1, s2, 3, cat3_diff_author_diff_genre)
+        
+        author_pair_count += 1
 
 # ---------------- Balance 4 categories ----------------
 
@@ -81,8 +110,21 @@ random.shuffle(cat2_diff_author_same_genre)
 random.shuffle(cat3_diff_author_diff_genre)
 random.shuffle(cat4_same_author_diff_genre)
 
-# Combine all categories for balanced sampling
-all_data = cat1_same_author_same_genre + cat2_diff_author_same_genre + cat3_diff_author_diff_genre + cat4_same_author_diff_genre
+# Balance all 4 categories to be roughly equal
+# Find the minimum size among all categories to balance to
+min_size = min(len(cat1_same_author_same_genre), len(cat2_diff_author_same_genre), 
+               len(cat3_diff_author_diff_genre), len(cat4_same_author_diff_genre))
+
+# If min_size is too small, use a reasonable target size
+target_size = max(min_size, 500)  # Ensure at least 500 pairs per category
+
+balanced_cat1 = cat1_same_author_same_genre[:min(target_size, len(cat1_same_author_same_genre))]
+balanced_cat2 = cat2_diff_author_same_genre[:min(target_size, len(cat2_diff_author_same_genre))]
+balanced_cat3 = cat3_diff_author_diff_genre[:min(target_size, len(cat3_diff_author_diff_genre))]
+balanced_cat4 = cat4_same_author_diff_genre[:min(target_size, len(cat4_same_author_diff_genre))]
+
+# Combine balanced categories
+all_data = balanced_cat1 + balanced_cat2 + balanced_cat3 + balanced_cat4
 random.shuffle(all_data)
 
 # ---------------- Ensure all authors appear ----------------
@@ -192,25 +234,6 @@ target_test_size = 1500
 sampled_train_data = train_data_enhanced[:min(target_train_size, len(train_data_enhanced))]
 sampled_test_data = test_data_enhanced[:min(target_test_size, len(test_data_enhanced))]
 
-# Print category distribution after sampling
-def print_category_distribution(data, name):
-    cat_counts = defaultdict(int)
-    mode_counts = defaultdict(int)
-    for item in data:
-        cat_counts[item['category']] += 1
-        mode_counts[item['mode']] += 1
-    
-    print(f"\n{name} - Category Distribution:")
-    for cat in sorted(cat_counts.keys()):
-        count = cat_counts[cat]
-        pct = 100 * count / len(data) if len(data) > 0 else 0
-        print(f"  Category {cat}: {count} pairs ({pct:.1f}%)")
-    
-    print(f"{name} - Mode Distribution:")
-    for mode, count in mode_counts.items():
-        pct = 100 * count / len(data) if len(data) > 0 else 0
-        print(f"  {mode}: {count} pairs ({pct:.1f}%)")
-
 # Save sampled data
 with open("../json/training_data.json", "w") as f:
     json.dump(sampled_train_data, f, ensure_ascii=False, indent=2)
@@ -218,5 +241,5 @@ with open("../json/training_data.json", "w") as f:
 with open("../json/testing_data_1.json", "w") as f:
     json.dump(sampled_test_data, f, ensure_ascii=False, indent=2)
 
-print(f"\nSaved {len(sampled_train_data)} pairs to training_data.json")
-print(f"Saved {len(sampled_test_data)} pairs to testing_data_1.json")
+print(f"Final training data size: {len(sampled_train_data)} pairs")
+print(f"Final testing data size: {len(sampled_test_data)} pairs")

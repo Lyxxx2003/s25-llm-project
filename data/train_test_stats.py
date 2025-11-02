@@ -154,7 +154,7 @@ def plot_genre_breakdown(data, dataset_name, filename):
     plt.figure(figsize=(10, 6))
     bars = plt.bar(genres, pair_counts, color=['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57'])
     plt.title(f'{dataset_name} - Genre Distribution (Number of Pairs)', fontproperties=chinese_font, fontsize=14)
-    plt.xlabel('流派', fontproperties=chinese_font, fontsize=12)
+    plt.xlabel('Genre', fontproperties=chinese_font, fontsize=12)
     plt.ylabel('Number of Pairs', fontsize=12)
     plt.xticks(rotation=45, ha='right', fontproperties=chinese_font)
     
