@@ -1,10 +1,6 @@
 import json
 from collections import defaultdict, Counter
 import matplotlib.pyplot as plt
-import matplotlib.font_manager as fm
-
-# Set up Chinese font for matplotlib
-chinese_font = fm.FontProperties(fname="../simhei.ttf")
 
 # ------------ Load Datasets ------------
 
@@ -148,15 +144,23 @@ def plot_genre_breakdown(data, dataset_name, filename):
     
     # Get data for plotting
     genre_order = ['民俗与传统', '爱与浪漫', '生活与反思', '社会与现实', '风景与旅程']
+    map_to_english = {
+        '民俗与传统': 'Folklore & Traditional',
+        '爱与浪漫': 'Love & Romance',
+        '生活与反思': 'Life & Reflection',
+        '社会与现实': 'Society & Reality',
+        '风景与旅程': 'Scenery & Journey'
+    }
     genres = [g for g in genre_order if g in genre_pair_count]
     pair_counts = [genre_pair_count[g] // 2 for g in genres]  # Each pair contributes twice
+    genres_english = [map_to_english[g] for g in genres]
     
     plt.figure(figsize=(10, 6))
-    bars = plt.bar(genres, pair_counts, color=['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57'])
-    plt.title(f'{dataset_name} - Genre Distribution (Number of Pairs)', fontproperties=chinese_font, fontsize=14)
-    plt.xlabel('Genre', fontproperties=chinese_font, fontsize=12)
+    bars = plt.bar(genres_english, pair_counts, color=['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57'])
+    plt.title(f'{dataset_name} - Genre Distribution (Number of Pairs)', fontsize=14)
+    plt.xlabel('Genre', fontsize=12)
     plt.ylabel('Number of Pairs', fontsize=12)
-    plt.xticks(rotation=45, ha='right', fontproperties=chinese_font)
+    plt.xticks(rotation=45, ha='right')
     
     # Add value labels on bars
     for bar in bars:
