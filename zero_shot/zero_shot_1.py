@@ -8,7 +8,7 @@ with open('../json/testing_data_1.json', 'r') as file:
     test_data_1 = json.load(file)
 
 # Combine test data
-test_data = test_data_1[:1000]
+test_data = test_data_1
 
 # Initialize the Together client
 client = Together(api_key="YOUR_API_KEY")

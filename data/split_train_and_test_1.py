@@ -181,13 +181,42 @@ def add_mode_info(data):
 train_data_enhanced = add_mode_info(train_data)
 test_data_enhanced = add_mode_info(test_data)
 
-# Save enhanced data
+# Randomly sample desired amounts
+random.shuffle(train_data_enhanced)
+random.shuffle(test_data_enhanced)
+
+# Sample 6000 training pairs and 1500 test pairs
+target_train_size = 6000
+target_test_size = 1500
+
+sampled_train_data = train_data_enhanced[:min(target_train_size, len(train_data_enhanced))]
+sampled_test_data = test_data_enhanced[:min(target_test_size, len(test_data_enhanced))]
+
+# Print category distribution after sampling
+def print_category_distribution(data, name):
+    cat_counts = defaultdict(int)
+    mode_counts = defaultdict(int)
+    for item in data:
+        cat_counts[item['category']] += 1
+        mode_counts[item['mode']] += 1
+    
+    print(f"\n{name} - Category Distribution:")
+    for cat in sorted(cat_counts.keys()):
+        count = cat_counts[cat]
+        pct = 100 * count / len(data) if len(data) > 0 else 0
+        print(f"  Category {cat}: {count} pairs ({pct:.1f}%)")
+    
+    print(f"{name} - Mode Distribution:")
+    for mode, count in mode_counts.items():
+        pct = 100 * count / len(data) if len(data) > 0 else 0
+        print(f"  {mode}: {count} pairs ({pct:.1f}%)")
+
+# Save sampled data
 with open("../json/training_data.json", "w") as f:
-    json.dump(train_data_enhanced, f, ensure_ascii=False, indent=2)
+    json.dump(sampled_train_data, f, ensure_ascii=False, indent=2)
 
 with open("../json/testing_data_1.json", "w") as f:
-    json.dump(test_data_enhanced, f, ensure_ascii=False, indent=2)
+    json.dump(sampled_test_data, f, ensure_ascii=False, indent=2)
 
-
-print(f"Saved {len(train_data_enhanced)} pairs to training_data.json")
-print(f"Saved {len(test_data_enhanced)} pairs to testing_data_1.json")
+print(f"\nSaved {len(sampled_train_data)} pairs to training_data.json")
+print(f"Saved {len(sampled_test_data)} pairs to testing_data_1.json")

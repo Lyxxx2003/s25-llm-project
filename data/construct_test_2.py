@@ -93,8 +93,6 @@ final_data.extend(cat2_diff_author_same_genre)
 final_data.extend(cat3_diff_author_diff_genre)
 final_data.extend(cat4_same_author_diff_genre)
 
-print(f"Total pairs generated: {len(final_data)}")
-
 random.shuffle(final_data)
 
 # Add mode information and save
