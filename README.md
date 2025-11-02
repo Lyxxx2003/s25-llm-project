@@ -68,6 +68,11 @@ The dataset consists of Chinese song lyrics categorized into 5 main genres:
 
 ### Prerequisites
 
+It's recommended to use virtual environment, below is the guide for MacOs:
+- python3 -m venv venv
+- venv/bin/activate
+
+And then run the following command
 ```bash
 pip install -r requirements.txt
 ```
