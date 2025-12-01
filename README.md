@@ -2,6 +2,8 @@
 
 A comprehensive machine learning project focused on verifying authorship of Chinese song lyrics using Large Language Models (LLMs). This project implements both zero-shot and fine-tuning approaches to determine whether two lyrics were written by the same author, analyzing writing style across different musical genres.
 
+Please see our paper on [arxiv](https://arxiv.org/abs/2511.21930)
+
 ## Placeholder for paper link
 
 ## Project Overview
