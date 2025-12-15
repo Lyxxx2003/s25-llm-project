@@ -2,6 +2,7 @@ import json
 from collections import defaultdict, Counter
 import matplotlib.pyplot as plt
 import numpy as np
+import sys
 
 # ------------ Load Datasets ------------
 
@@ -63,56 +64,64 @@ def compute_category_distribution(pairs):
 
 # ------------ Stats ------------
 
-print("-------- OVERLAP CHECKS --------")
-print("Train/Test_1 pair overlap:", check_pair_overlap(train_data, test_1_data))
-print("Train/Test_2 pair overlap:", check_pair_overlap(train_data, test_2_data))
-print("Train/Test_2 author overlap:", check_author_overlap(train_data, test_2_data))
+# Open output file for writing
+with open('./train_test_stats.txt', 'w', encoding='utf-8') as output_file:
+    # Function to print to both console and file
+    def print_both(*args, **kwargs):
+        #print(*args, **kwargs)
+        print(*args, **kwargs, file=output_file)
 
-print("\n-------- 4-CATEGORY DISTRIBUTION --------")
-category_names = {
-    1: "Same Author, Same Genre",
-    2: "Diff Author, Same Genre",
-    3: "Diff Author, Diff Genre",
-    4: "Same Author, Diff Genre"
-}
+    print_both("-------- OVERLAP CHECKS --------")
+    print_both("Train/Test_1 pair overlap:", check_pair_overlap(train_data, test_1_data))
+    print_both("Train/Test_2 pair overlap:", check_pair_overlap(train_data, test_2_data))
+    print_both("Train/Test_2 author overlap:", check_author_overlap(train_data, test_2_data))
 
-for name, data in [("Train", train_data), ("Test_1", test_1_data), ("Test_2", test_2_data)]:
-    distribution, total = compute_category_distribution(data)
-    print(f"\n{name} Dataset - Total pairs: {total}")
-    for cat_num in sorted(distribution.keys()):
-        count, pct = distribution[cat_num]
-        print(f"  Category {cat_num} ({category_names[cat_num]}): {count:>4} pairs ({pct:>5.2f}%)")
+    # Category distribution
+    print_both("\n-------- 4-CATEGORY DISTRIBUTION --------")
+    category_names = {
+        1: "Same Author, Same Genre",
+        2: "Diff Author, Same Genre",
+        3: "Diff Author, Diff Genre",
+        4: "Same Author, Diff Genre"
+    }
+
+    for name, data in [("Train", train_data), ("Test_1", test_1_data), ("Test_2", test_2_data)]:
+        distribution, total = compute_category_distribution(data)
+        print_both(f"\n{name} Dataset - Total pairs: {total}")
+        for cat_num in sorted(distribution.keys()):
+            count, pct = distribution[cat_num]
+            print_both(f"  Category {cat_num} ({category_names[cat_num]}): {count:>4} pairs ({pct:>5.2f}%)")
 
 # ------------ Genre + Mode Coverage Check ------------
 
-def validate_coverage(name, data):
-    genre_to_categories = defaultdict(set)
-    genre_pair_count = Counter()
+    def validate_coverage(name, data):
+        genre_to_categories = defaultdict(set)
+        genre_pair_count = Counter()
 
-    for item in data:
-        if isinstance(item, dict):
-            s1, s2, cat = item['song1'], item['song2'], item['category']
-        else:
-            s1, s2, cat = item
+        for item in data:
+            if isinstance(item, dict):
+                s1, s2, cat = item['song1'], item['song2'], item['category']
+            else:
+                s1, s2, cat = item
 
-        genres = set(s1["genre"]) | set(s2["genre"])
-        for g in genres:
-            genre_to_categories[g].add(cat)
-            genre_pair_count[g] += 1
+            genres = set(s1["genre"]) | set(s2["genre"])
+            for g in genres:
+                genre_to_categories[g].add(cat)
+                genre_pair_count[g] += 1
 
-    total_pairs = len(data)
+        total_pairs = len(data)
 
-    print(f"\n-------- GENRE COVERAGE SUMMARY: {name} --------")
-    for genre in sorted(genre_to_categories):
-        cats = sorted(genre_to_categories[genre])
-        count = genre_pair_count[genre]
-        pct = 100 * count / total_pairs
-        print(f"{genre:<15} {cats} {count} ({pct:.2f}%)")
+        print_both(f"\n-------- GENRE COVERAGE SUMMARY: {name} --------")
+        for genre in sorted(genre_to_categories):
+            cats = sorted(genre_to_categories[genre])
+            count = genre_pair_count[genre]
+            pct = 100 * count / total_pairs
+            print_both(f"{genre:<15} {cats} {count} ({pct:.2f}%)")
 
-# Run validation for all three sets
-validate_coverage("Train", train_data)
-validate_coverage("Test_1", test_1_data)
-validate_coverage("Test_2", test_2_data)
+    # Run validation for all three sets
+    validate_coverage("Train", train_data)
+    validate_coverage("Test_1", test_1_data)
+    validate_coverage("Test_2", test_2_data)
 
 # ------------ Visualization Functions ------------
 
@@ -232,16 +241,18 @@ def plot_category_distribution(data, dataset_name, filename):
 
 # ------------ Generate Visualizations ------------
 
-print("\n-------- GENERATING VISUALIZATIONS --------")
+    print_both("\n-------- GENERATING VISUALIZATIONS --------")
 
-plot_genre_breakdown(train_data, "Training Dataset", "../images/train_genre_dist.png")
-plot_genre_breakdown(test_1_data, "Test 1 Dataset", "../images/test1_genre_dist.png")
-plot_genre_breakdown(test_2_data, "Test 2 Dataset", "../images/test2_genre_dist.png")
+    plot_genre_breakdown(train_data, "Training Dataset", "../images/train_genre_dist.png")
+    plot_genre_breakdown(test_1_data, "Test 1 Dataset", "../images/test1_genre_dist.png")
+    plot_genre_breakdown(test_2_data, "Test 2 Dataset", "../images/test2_genre_dist.png")
 
-plot_category_distribution(train_data, "Training Dataset", "../images/train_category_dist.png")
-plot_category_distribution(test_1_data, "Test 1 Dataset", "../images/test1_category_dist.png")
-plot_category_distribution(test_2_data, "Test 2 Dataset", "../images/test2_category_dist.png")
+    plot_category_distribution(train_data, "Training Dataset", "../images/train_category_dist.png")
+    plot_category_distribution(test_1_data, "Test 1 Dataset", "../images/test1_category_dist.png")
+    plot_category_distribution(test_2_data, "Test 2 Dataset", "../images/test2_category_dist.png")
 
-print("Visualizations saved to ../images/")
-print("- Genre breakdown: train_genre_dist.png, test1_genre_dist.png, test2_genre_dist.png")
-print("- Category distribution: train_category_dist.png, test1_category_dist.png, test2_category_dist.png")
+    print_both("Visualizations saved to ../images/")
+    print_both("- Genre breakdown: train_genre_dist.png, test1_genre_dist.png, test2_genre_dist.png")
+    print_both("- Category distribution: train_category_dist.png, test1_category_dist.png, test2_category_dist.png")
+
+print("Statistics have been exported to ../train_test_stats.txt")
