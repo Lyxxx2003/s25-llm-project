@@ -7,7 +7,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from sklearn import metrics
 
 # load from hf instead
-MODEL_NAME = "deepseek-ai/DeepSeek-R1-Distill-Llama-8B"
+MODEL_NAME = "deepseek-ai/DeepSeek-R1-Distill-Llama-70B"
 
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 model = AutoModelForCausalLM.from_pretrained(
