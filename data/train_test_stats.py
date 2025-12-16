@@ -65,7 +65,7 @@ def compute_category_distribution(pairs):
 # ------------ Stats ------------
 
 # Open output file for writing
-with open('./train_test_stats.txt', 'w', encoding='utf-8') as output_file:
+with open('../results/train_test_stats.txt', 'w', encoding='utf-8') as output_file:
     # Function to print to both console and file
     def print_both(*args, **kwargs):
         #print(*args, **kwargs)
