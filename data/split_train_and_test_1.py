@@ -60,7 +60,7 @@ for i in range(len(all_data)):
 # ----------------------------
 # Balancing
 # ----------------------------
-def balance_categories(data, M=3):
+def balance_categories(data):
     cats = {1: [], 2: [], 3: [], 4: []}
     for item in data:
         cats[item["category"]].append(item)
@@ -69,14 +69,11 @@ def balance_categories(data, M=3):
 
     scale = min(c1, c2, c3, c4)
 
-    random.shuffle(cats[2])
-    random.shuffle(cats[3])
-
     result = []
     result.extend(cats[1][:scale])
-    result.extend(cats[4][:2*scale])
-    result.extend(cats[2][:3*scale])
+    result.extend(cats[2][:scale])
     result.extend(cats[3][:scale])
+    result.extend(cats[4][:scale])
 
     random.shuffle(result)
     return result
@@ -125,7 +122,7 @@ def genre_smoothing(data, M_genre=3):
 
 
 all_pairs = genre_smoothing(all_pairs, M_genre=1)
-all_pairs = balance_categories(all_pairs, M=1)
+all_pairs = balance_categories(all_pairs)
 
 
 # ----------------------------

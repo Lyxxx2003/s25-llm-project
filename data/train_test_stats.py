@@ -1,8 +1,13 @@
 import json
 from collections import defaultdict, Counter
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
+
+# Turn off interactive mode to ensure figures are saved properly
+plt.ioff()
 
 # ------------ Load Datasets ------------
 
@@ -123,6 +128,12 @@ with open('../results/train_test_stats.txt', 'w', encoding='utf-8') as output_fi
     validate_coverage("Test_1", test_1_data)
     validate_coverage("Test_2", test_2_data)
 
+    # ------------ Generate Visualizations ------------
+    print_both("\n-------- GENERATING VISUALIZATIONS --------")
+    print_both("Visualizations saved to ../images/")
+    print_both("- Genre breakdown: train_genre_dist.png, test1_genre_dist.png, test2_genre_dist.png")
+    print_both("- Category distribution: train_category_dist.png, test1_category_dist.png, test2_category_dist.png")
+
 # ------------ Visualization Functions ------------
 
 def plot_genre_breakdown(data, dataset_name, filename):
@@ -165,7 +176,7 @@ def plot_genre_breakdown(data, dataset_name, filename):
 
     for bar in bars:
         height = bar.get_height()
-        plt.text(bar.get_x() + bar.get_width()/2., height + 0.2,
+        plt.text(bar.get_x() + bar.get_width()/2., height + 0.1,
                  f'{int(height)}', ha='center', va='bottom')
 
     plt.tight_layout()
@@ -239,20 +250,14 @@ def plot_category_distribution(data, dataset_name, filename):
     plt.savefig(filename, dpi=300, bbox_inches='tight')
     plt.close()
 
-# ------------ Generate Visualizations ------------
+# visualization
+plot_genre_breakdown(train_data, "Training Dataset", "../images/train_genre_dist.png")
+plot_genre_breakdown(test_1_data, "Test 1 Dataset", "../images/test1_genre_dist.png")
+plot_genre_breakdown(test_2_data, "Test 2 Dataset", "../images/test2_genre_dist.png")
 
-    print_both("\n-------- GENERATING VISUALIZATIONS --------")
+plot_category_distribution(train_data, "Training Dataset", "../images/train_category_dist.png")
+plot_category_distribution(test_1_data, "Test 1 Dataset", "../images/test1_category_dist.png")
+plot_category_distribution(test_2_data, "Test 2 Dataset", "../images/test2_category_dist.png")
 
-    plot_genre_breakdown(train_data, "Training Dataset", "../images/train_genre_dist.png")
-    plot_genre_breakdown(test_1_data, "Test 1 Dataset", "../images/test1_genre_dist.png")
-    plot_genre_breakdown(test_2_data, "Test 2 Dataset", "../images/test2_genre_dist.png")
-
-    plot_category_distribution(train_data, "Training Dataset", "../images/train_category_dist.png")
-    plot_category_distribution(test_1_data, "Test 1 Dataset", "../images/test1_category_dist.png")
-    plot_category_distribution(test_2_data, "Test 2 Dataset", "../images/test2_category_dist.png")
-
-    print_both("Visualizations saved to ../images/")
-    print_both("- Genre breakdown: train_genre_dist.png, test1_genre_dist.png, test2_genre_dist.png")
-    print_both("- Category distribution: train_category_dist.png, test1_category_dist.png, test2_category_dist.png")
-
-print("Statistics have been exported to ../train_test_stats.txt")
+print("Statistics have been exported to ../results/train_test_stats.txt")
+print("Visualizations generated and saved to ../images/")

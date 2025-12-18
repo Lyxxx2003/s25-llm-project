@@ -46,22 +46,14 @@ for i in range(len(all_data)):
         })
 
 # smoothing multiplier
-def balance_categories(data, M=3):
+def balance_categories(data):
     cats = {1: [], 2: [], 3: [], 4: []}
     for item in data:
         cats[item["category"]].append(item)
 
     c1, c2, c3, c4 = map(len, (cats[1], cats[2], cats[3], cats[4]))
 
-    scale = max(c1, c4)
-    # cap2 = M * scale
-    # cap3 = M * scale
-
-    # t2 = min(c2, cap2)
-    # t3 = min(c3, cap3)
-
-    random.shuffle(cats[2])
-    random.shuffle(cats[3])
+    scale = 10 #min(c1, c2, c3, c4)
 
     result = []
     result.extend(cats[1][:scale])
@@ -118,8 +110,8 @@ def genre_smoothing(data, M_genre=3):
     random.shuffle(result)
     return result
 
-test2_data = genre_smoothing(test2_data, M_genre=3)
-test2_data = balance_categories(test2_data, M=3)
+test2_data = genre_smoothing(test2_data, M_genre=1)
+test2_data = balance_categories(test2_data)
 
 
 with open("../json/testing_data_2.json", "w") as f:

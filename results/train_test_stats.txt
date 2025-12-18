@@ -5,41 +5,46 @@ Train/Test_2 author overlap: False
 
 -------- 4-CATEGORY DISTRIBUTION --------
 
-Train Dataset - Total pairs: 640
-  Category 1 (Same Author, Same Genre):  160 pairs (25.00%)
-  Category 2 (Diff Author, Same Genre):  160 pairs (25.00%)
-  Category 3 (Diff Author, Diff Genre):  160 pairs (25.00%)
-  Category 4 (Same Author, Diff Genre):  160 pairs (25.00%)
+Train Dataset - Total pairs: 608
+  Category 1 (Same Author, Same Genre):  152 pairs (25.00%)
+  Category 2 (Diff Author, Same Genre):  152 pairs (25.00%)
+  Category 3 (Diff Author, Diff Genre):  152 pairs (25.00%)
+  Category 4 (Same Author, Diff Genre):  152 pairs (25.00%)
 
-Test_1 Dataset - Total pairs: 160
-  Category 1 (Same Author, Same Genre):   40 pairs (25.00%)
-  Category 2 (Diff Author, Same Genre):   40 pairs (25.00%)
-  Category 3 (Diff Author, Diff Genre):   40 pairs (25.00%)
-  Category 4 (Same Author, Diff Genre):   40 pairs (25.00%)
+Test_1 Dataset - Total pairs: 156
+  Category 1 (Same Author, Same Genre):   39 pairs (25.00%)
+  Category 2 (Diff Author, Same Genre):   39 pairs (25.00%)
+  Category 3 (Diff Author, Diff Genre):   39 pairs (25.00%)
+  Category 4 (Same Author, Diff Genre):   39 pairs (25.00%)
 
-Test_2 Dataset - Total pairs: 25
-  Category 1 (Same Author, Same Genre):    1 pairs ( 4.00%)
-  Category 2 (Diff Author, Same Genre):    8 pairs (32.00%)
-  Category 3 (Diff Author, Diff Genre):    8 pairs (32.00%)
-  Category 4 (Same Author, Diff Genre):    8 pairs (32.00%)
+Test_2 Dataset - Total pairs: 36
+  Category 1 (Same Author, Same Genre):    8 pairs (22.22%)
+  Category 2 (Diff Author, Same Genre):   10 pairs (27.78%)
+  Category 3 (Diff Author, Diff Genre):   10 pairs (27.78%)
+  Category 4 (Same Author, Diff Genre):    8 pairs (22.22%)
 
 -------- GENRE COVERAGE SUMMARY: Train --------
-民俗与传统           [1, 2, 3, 4] 73 (11.41%)
-爱与浪漫            [1, 2, 3, 4] 409 (63.91%)
-生活与反思           [1, 2, 3, 4] 373 (58.28%)
-社会与现实           [1, 2, 3, 4] 148 (23.12%)
-风景与旅程           [1, 2, 3, 4] 180 (28.12%)
+民俗与传统           [1, 2, 3, 4] 92 (15.13%)
+爱与浪漫            [1, 2, 3, 4] 376 (61.84%)
+生活与反思           [1, 2, 3, 4] 340 (55.92%)
+社会与现实           [1, 2, 3, 4] 141 (23.19%)
+风景与旅程           [1, 2, 3, 4] 200 (32.89%)
 
 -------- GENRE COVERAGE SUMMARY: Test_1 --------
-民俗与传统           [1, 2, 3, 4] 23 (14.38%)
-爱与浪漫            [1, 2, 3, 4] 93 (58.12%)
-生活与反思           [1, 2, 3, 4] 95 (59.38%)
-社会与现实           [1, 2, 3, 4] 32 (20.00%)
-风景与旅程           [1, 2, 3, 4] 58 (36.25%)
+民俗与传统           [1, 2, 3, 4] 20 (12.82%)
+爱与浪漫            [1, 2, 3, 4] 101 (64.74%)
+生活与反思           [1, 2, 3, 4] 98 (62.82%)
+社会与现实           [1, 2, 3, 4] 29 (18.59%)
+风景与旅程           [1, 2, 3, 4] 39 (25.00%)
 
 -------- GENRE COVERAGE SUMMARY: Test_2 --------
-民俗与传统           [2, 4] 3 (12.00%)
-爱与浪漫            [2, 3, 4] 11 (44.00%)
-生活与反思           [1, 2, 3, 4] 14 (56.00%)
-社会与现实           [2, 3, 4] 7 (28.00%)
-风景与旅程           [2, 3, 4] 6 (24.00%)
+民俗与传统           [1, 2, 3, 4] 7 (19.44%)
+爱与浪漫            [1, 2, 3, 4] 14 (38.89%)
+生活与反思           [1, 2, 3, 4] 14 (38.89%)
+社会与现实           [1, 2, 3, 4] 13 (36.11%)
+风景与旅程           [1, 2, 3, 4] 6 (16.67%)
+
+-------- GENERATING VISUALIZATIONS --------
+Visualizations saved to ../images/
+- Genre breakdown: train_genre_dist.png, test1_genre_dist.png, test2_genre_dist.png
+- Category distribution: train_category_dist.png, test1_category_dist.png, test2_category_dist.png
