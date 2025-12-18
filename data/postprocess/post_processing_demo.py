@@ -31,7 +31,7 @@ def process_file(file_path):
         line = re.sub(r'\[.*?\]', '', line)  # Remove content in square brackets
         line = re.sub(r'^.*?：', '', line)  # Remove text before the colon
         # Replace unwanted characters with space
-        line = re.sub(r'[\"（）～【】“”()~[\]]', ' ', line)  # Add more unwanted characters here
+        line = re.sub(r'[\"（）～【】“”()~\[\]，。；：？！、]', ' ', line)  # Add more unwanted characters here
         line = line.strip()  # Strip any leading or trailing spaces
         
         if line:
