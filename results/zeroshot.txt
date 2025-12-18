@@ -14,5 +14,5 @@ Genre        Mode  Accuracy  F1 Micro  F1 Weighted  F1 Macro   Recall  Precision
 
 Metrics per Mode:
        Mode  Accuracy  F1 Micro  F1 Weighted  F1 Macro  Recall  Precision
-cross-genre    0.4875    0.4875     0.327731  0.327731  0.4875   0.246835
   per-genre    0.5000    0.5000     0.333333  0.333333  0.5000   0.250000
+cross-genre    0.4875    0.4875     0.327731  0.327731  0.4875   0.246835
